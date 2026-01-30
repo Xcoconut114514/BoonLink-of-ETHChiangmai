@@ -153,7 +153,7 @@ export class BitkubExchangeService implements IExchangeService {
 
     try {
       const response = await fetch(`${this.apiUrl}/market/ticker`);
-      const data = await response.json();
+      const data = await response.json() as Record<string, { last: number }>;
 
       const symbol = this.tokenSymbols[token];
       const ticker = data[symbol];
@@ -239,7 +239,7 @@ export class CoinGeckoExchangeService implements IExchangeService {
       const response = await fetch(
         `${this.apiUrl}/simple/price?ids=${tokenId}&vs_currencies=thb`
       );
-      const data = await response.json();
+      const data = await response.json() as Record<string, { thb?: number }>;
 
       const rate = data[tokenId]?.thb;
       if (!rate) {

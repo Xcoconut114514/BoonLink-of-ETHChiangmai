@@ -3,7 +3,7 @@
  * Handles synchronization when network is restored
  */
 
-import type { NetworkStatus, PaymentStatus } from '../types/index.js';
+import { NetworkStatus, PaymentStatus } from '../types/index.js';
 import type { OfflineQueueManager } from './queue.js';
 import type { OrderStorage } from './storage.js';
 

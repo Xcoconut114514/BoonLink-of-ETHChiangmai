@@ -3,14 +3,14 @@
  * AI Tool for executing crypto payments
  */
 
-import type {
-  ConfirmPaymentParams,
-  ConfirmPaymentResult,
-  PaymentOrder,
-  PaymentQuote,
+import {
   PaymentStatus,
-  BoonLinkConfig,
-  NetworkStatus,
+  type ConfirmPaymentParams,
+  type ConfirmPaymentResult,
+  type PaymentOrder,
+  type PaymentQuote,
+  type BoonLinkConfig,
+  type NetworkStatus,
 } from '../types/index.js';
 import {
   createBlockchainService,

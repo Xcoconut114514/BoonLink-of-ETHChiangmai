@@ -39,7 +39,18 @@ export {
   shortenAddress,
   shortenTxHash,
   getExplorerUrl,
+  // EIP-712 Offline Payment
+  BOONLINK_DOMAIN,
+  PAYMENT_TYPES,
+  signOfflinePayment,
+  verifyOfflinePayment,
+  createOfflinePaymentMessage,
+  encodeSignedPaymentForQR,
+  decodeSignedPaymentFromQR,
+  createPaymentTypedDataHash,
   type IBlockchainService,
+  type OfflinePaymentMessage,
+  type SignedOfflinePayment,
 } from './services/blockchain.js';
 
 export {
@@ -68,7 +79,6 @@ export {
   isQuoteValid,
   getQuoteTimeRemaining,
   initExchangeService,
-  storeQuote,
 } from './tools/get-quote.js';
 
 export {
@@ -77,6 +87,7 @@ export {
   confirmPaymentToolDefinition,
   formatPaymentResultForChat,
   initPaymentServices,
+  storeQuote,
   getOrder,
   getUserOrders,
 } from './tools/confirm-pay.js';
@@ -114,8 +125,9 @@ export {
 // ============================================================================
 
 import type { BoonLinkConfig } from './types/index.js';
-import { initExchangeService } from './tools/get-quote.js';
-import { initPaymentServices } from './tools/confirm-pay.js';
+import { initExchangeService, getCryptoQuote, getAllRates, getQuoteToolDefinition } from './tools/get-quote.js';
+import { initPaymentServices, confirmPayment, checkPaymentStatus, confirmPaymentToolDefinition } from './tools/confirm-pay.js';
+import { scanPromptPayQR, scanQRToolDefinition } from './tools/scan-qr.js';
 
 /**
  * Default configuration

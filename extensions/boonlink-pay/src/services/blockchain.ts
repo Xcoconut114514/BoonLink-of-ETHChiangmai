@@ -292,3 +292,203 @@ export function getExplorerUrl(txHash: string, testnet: boolean = false): string
   const baseUrl = testnet ? 'https://testnet.bscscan.com' : 'https://bscscan.com';
   return `${baseUrl}/tx/${txHash}`;
 }
+
+// ============================================================================
+// EIP-712 Typed Data Signing for Offline Payments
+// ============================================================================
+
+/**
+ * EIP-712 Domain for BoonLink offline payments
+ */
+export const BOONLINK_DOMAIN = {
+  name: 'BoonLink Payment',
+  version: '1',
+  chainId: 56, // BSC Mainnet
+  verifyingContract: '0x0000000000000000000000000000000000000000', // Placeholder, updated at runtime
+};
+
+/**
+ * EIP-712 Types for offline payment authorization
+ */
+export const PAYMENT_TYPES = {
+  Payment: [
+    { name: 'orderId', type: 'string' },
+    { name: 'token', type: 'string' },
+    { name: 'amount', type: 'uint256' },
+    { name: 'recipient', type: 'address' },
+    { name: 'nonce', type: 'uint256' },
+    { name: 'deadline', type: 'uint256' },
+  ],
+};
+
+/**
+ * Offline payment message structure
+ */
+export interface OfflinePaymentMessage {
+  orderId: string;
+  token: string;
+  amount: bigint;
+  recipient: string;
+  nonce: bigint;
+  deadline: bigint;
+}
+
+/**
+ * Signed offline payment data (for QR code)
+ */
+export interface SignedOfflinePayment {
+  message: OfflinePaymentMessage;
+  signature: string;
+  signer: string;
+  domain: typeof BOONLINK_DOMAIN;
+}
+
+/**
+ * Create EIP-712 typed data hash for offline payment
+ */
+export function createPaymentTypedDataHash(
+  message: OfflinePaymentMessage,
+  domain: typeof BOONLINK_DOMAIN = BOONLINK_DOMAIN
+): string {
+  const domainSeparator = ethers.TypedDataEncoder.hashDomain(domain);
+  const messageHash = ethers.TypedDataEncoder.hashStruct('Payment', PAYMENT_TYPES, message);
+  
+  return ethers.keccak256(
+    ethers.concat([
+      '0x1901',
+      domainSeparator,
+      messageHash,
+    ])
+  );
+}
+
+/**
+ * Sign offline payment with EIP-712 (used by wallet/frontend)
+ */
+export async function signOfflinePayment(
+  message: OfflinePaymentMessage,
+  privateKey: string,
+  domain: typeof BOONLINK_DOMAIN = BOONLINK_DOMAIN
+): Promise<SignedOfflinePayment> {
+  const wallet = new Wallet(privateKey);
+  
+  const signature = await wallet.signTypedData(
+    domain,
+    PAYMENT_TYPES,
+    message
+  );
+
+  return {
+    message,
+    signature,
+    signer: wallet.address,
+    domain,
+  };
+}
+
+/**
+ * Verify EIP-712 signed offline payment (used by merchant/backend)
+ * Returns the signer address if valid, null if invalid
+ */
+export function verifyOfflinePayment(
+  signedPayment: SignedOfflinePayment
+): { valid: boolean; signer: string | null; error?: string } {
+  try {
+    const { message, signature, signer: claimedSigner, domain } = signedPayment;
+    
+    // Check deadline
+    if (message.deadline < BigInt(Math.floor(Date.now() / 1000))) {
+      return { valid: false, signer: null, error: 'Payment authorization expired' };
+    }
+
+    // Recover signer from signature
+    const recoveredAddress = ethers.verifyTypedData(
+      domain,
+      PAYMENT_TYPES,
+      message,
+      signature
+    );
+
+    // Verify signer matches
+    if (recoveredAddress.toLowerCase() !== claimedSigner.toLowerCase()) {
+      return { 
+        valid: false, 
+        signer: recoveredAddress, 
+        error: `Signer mismatch: expected ${claimedSigner}, got ${recoveredAddress}` 
+      };
+    }
+
+    return { valid: true, signer: recoveredAddress };
+  } catch (error) {
+    return { 
+      valid: false, 
+      signer: null, 
+      error: `Signature verification failed: ${error instanceof Error ? error.message : 'Unknown error'}` 
+    };
+  }
+}
+
+/**
+ * Create offline payment message for signing
+ */
+export function createOfflinePaymentMessage(
+  orderId: string,
+  token: SupportedToken,
+  amountCrypto: number,
+  recipientAddress: string,
+  validityMinutes: number = 30
+): OfflinePaymentMessage {
+  const nonce = BigInt(Date.now());
+  const deadline = BigInt(Math.floor(Date.now() / 1000) + validityMinutes * 60);
+  
+  return {
+    orderId,
+    token,
+    amount: ethers.parseUnits(amountCrypto.toString(), 18),
+    recipient: recipientAddress,
+    nonce,
+    deadline,
+  };
+}
+
+/**
+ * Encode signed payment to compact string for QR code
+ */
+export function encodeSignedPaymentForQR(signedPayment: SignedOfflinePayment): string {
+  const data = {
+    o: signedPayment.message.orderId,
+    t: signedPayment.message.token,
+    a: signedPayment.message.amount.toString(),
+    r: signedPayment.message.recipient,
+    n: signedPayment.message.nonce.toString(),
+    d: signedPayment.message.deadline.toString(),
+    s: signedPayment.signature,
+    f: signedPayment.signer,
+  };
+  return Buffer.from(JSON.stringify(data)).toString('base64');
+}
+
+/**
+ * Decode signed payment from QR code string
+ */
+export function decodeSignedPaymentFromQR(qrData: string): SignedOfflinePayment | null {
+  try {
+    const decoded = JSON.parse(Buffer.from(qrData, 'base64').toString('utf8'));
+    
+    return {
+      message: {
+        orderId: decoded.o,
+        token: decoded.t,
+        amount: BigInt(decoded.a),
+        recipient: decoded.r,
+        nonce: BigInt(decoded.n),
+        deadline: BigInt(decoded.d),
+      },
+      signature: decoded.s,
+      signer: decoded.f,
+      domain: BOONLINK_DOMAIN,
+    };
+  } catch {
+    return null;
+  }
+}

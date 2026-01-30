@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BoonLink Offline Payment</title>
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.11.0/dist/ethers.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+  <style>
+    :root {
+      --primary: #6366f1;
+      --primary-dark: #4f46e5;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --error: #ef4444;
+      --bg: #0f172a;
+      --card: #1e293b;
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+    }
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 20px;
+    }
+    
+    .container {
+      max-width: 420px;
+      margin: 0 auto;
+    }
+    
+    .header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+    
+    .header h1 {
+      font-size: 24px;
+      margin-bottom: 8px;
+      background: linear-gradient(135deg, var(--primary), #8b5cf6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    
+    .header p {
+      color: var(--muted);
+      font-size: 14px;
+    }
+    
+    .card {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 16px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    }
+    
+    .card-title {
+      font-size: 14px;
+      color: var(--muted);
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .network-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+    }
+    
+    .network-status.online {
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    
+    .network-status.offline {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+    
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+    
+    .status-dot.online { background: var(--success); }
+    .status-dot.offline { background: var(--error); animation: pulse 2s infinite; }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    
+    .form-group {
+      margin-bottom: 16px;
+    }
+    
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    
+    .form-group input, .form-group select {
+      width: 100%;
+      padding: 12px 16px;
+      background: var(--bg);
+      border: 1px solid #334155;
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 16px;
+      transition: border-color 0.2s;
+    }
+    
+    .form-group input:focus, .form-group select:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+    
+    .amount-display {
+      text-align: center;
+      padding: 20px;
+      background: var(--bg);
+      border-radius: 12px;
+      margin-bottom: 16px;
+    }
+    
+    .amount-thb {
+      font-size: 36px;
+      font-weight: 700;
+      color: var(--text);
+    }
+    
+    .amount-crypto {
+      font-size: 18px;
+      color: var(--primary);
+      margin-top: 8px;
+    }
+    
+    .rate-info {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+    
+    .btn {
+      width: 100%;
+      padding: 16px;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), #8b5cf6);
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+    }
+    
+    .btn-primary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+    
+    .btn-connect {
+      background: var(--warning);
+      color: #1e1e1e;
+    }
+    
+    .qr-container {
+      text-align: center;
+      padding: 24px;
+    }
+    
+    .qr-container canvas {
+      max-width: 100%;
+      border-radius: 12px;
+      background: white;
+      padding: 16px;
+    }
+    
+    .qr-info {
+      margin-top: 16px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    
+    .qr-timer {
+      font-size: 20px;
+      color: var(--warning);
+      font-weight: 600;
+      margin-top: 8px;
+    }
+    
+    .wallet-info {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px;
+      background: var(--bg);
+      border-radius: 8px;
+      margin-bottom: 16px;
+    }
+    
+    .wallet-address {
+      font-family: monospace;
+      font-size: 14px;
+    }
+    
+    .balance {
+      font-size: 14px;
+      color: var(--success);
+    }
+    
+    .hidden { display: none !important; }
+    
+    .step-indicator {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+    
+    .step {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 600;
+      background: var(--card);
+      border: 2px solid #334155;
+    }
+    
+    .step.active {
+      background: var(--primary);
+      border-color: var(--primary);
+    }
+    
+    .step.completed {
+      background: var(--success);
+      border-color: var(--success);
+    }
+    
+    .signature-info {
+      background: var(--bg);
+      border-radius: 8px;
+      padding: 12px;
+      margin-top: 16px;
+      font-family: monospace;
+      font-size: 11px;
+      word-break: break-all;
+      color: var(--muted);
+    }
+    
+    .merchant-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px;
+      background: var(--bg);
+      border-radius: 12px;
+      margin-bottom: 16px;
+    }
+    
+    .merchant-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), #8b5cf6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+    
+    .merchant-details h3 {
+      font-size: 16px;
+      margin-bottom: 4px;
+    }
+    
+    .merchant-details p {
+      font-size: 13px;
+      color: var(--muted);
+    }
+    
+    .success-animation {
+      text-align: center;
+      padding: 40px;
+    }
+    
+    .success-icon {
+      font-size: 64px;
+      animation: bounce 0.5s ease;
+    }
+    
+    @keyframes bounce {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.2); }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🔗 BoonLink Pay</h1>
+      <p>Crypto → PromptPay Instant Payment</p>
+    </div>
+    
+    <!-- Network Status -->
+    <div id="networkStatus" class="network-status online">
+      <div class="status-dot online"></div>
+      <span>Online - Ready for payment</span>
+    </div>
+    
+    <!-- Step Indicator -->
+    <div class="step-indicator">
+      <div class="step active" id="step1">1</div>
+      <div class="step" id="step2">2</div>
+      <div class="step" id="step3">3</div>
+    </div>
+    
+    <!-- Step 1: Connect Wallet -->
+    <div id="connectSection" class="card">
+      <div class="card-title">Step 1: Connect Wallet</div>
+      <button id="connectBtn" class="btn btn-connect">
+        🦊 Connect MetaMask
+      </button>
+      <div id="walletInfo" class="wallet-info hidden">
+        <span class="wallet-address" id="walletAddress">0x...</span>
+        <span class="balance" id="walletBalance">0 USDT</span>
+      </div>
+    </div>
+    
+    <!-- Step 2: Payment Details -->
+    <div id="paymentSection" class="card hidden">
+      <div class="card-title">Step 2: Payment Details</div>
+      
+      <div class="merchant-info">
+        <div class="merchant-avatar">☕</div>
+        <div class="merchant-details">
+          <h3 id="merchantName">Nimman Coffee</h3>
+          <p id="merchantAccount">PromptPay: 081-xxx-5678</p>
+        </div>
+      </div>
+      
+      <div class="amount-display">
+        <div class="amount-thb">฿<span id="amountTHB">150</span></div>
+        <div class="amount-crypto" id="amountCrypto">≈ 4.21 USDT</div>
+        <div class="rate-info" id="rateInfo">1 USDT = ฿35.63</div>
+      </div>
+      
+      <div class="form-group">
+        <label>Pay with</label>
+        <select id="tokenSelect">
+          <option value="USDT">💵 USDT (Tether USD)</option>
+          <option value="USDC">🔵 USDC (USD Coin)</option>
+          <option value="ETH">💎 ETH (Ethereum)</option>
+        </select>
+      </div>
+      
+      <div class="form-group">
+        <label>Amount (THB)</label>
+        <input type="number" id="amountInput" value="150" min="1" max="10000">
+      </div>
+      
+      <button id="signBtn" class="btn btn-primary">
+        ✍️ Sign Offline Payment
+      </button>
+    </div>
+    
+    <!-- Step 3: QR Code -->
+    <div id="qrSection" class="card hidden">
+      <div class="card-title">Step 3: Show to Merchant</div>
+      
+      <div class="qr-container">
+        <canvas id="qrCanvas"></canvas>
+        <div class="qr-info">Scan this QR code to complete payment</div>
+        <div class="qr-timer">Valid for: <span id="countdown">30:00</span></div>
+      </div>
+      
+      <div class="signature-info">
+        <strong>EIP-712 Signature:</strong><br>
+        <span id="signatureDisplay">0x...</span>
+      </div>
+      
+      <button id="newPaymentBtn" class="btn btn-primary" style="margin-top: 16px;">
+        🔄 New Payment
+      </button>
+    </div>
+    
+    <!-- Success Screen -->
+    <div id="successSection" class="card hidden">
+      <div class="success-animation">
+        <div class="success-icon">✅</div>
+        <h2 style="margin-top: 16px;">Payment Complete!</h2>
+        <p style="color: var(--muted); margin-top: 8px;">
+          Transaction confirmed on BSC
+        </p>
+        <div id="txHash" style="margin-top: 16px; font-family: monospace; font-size: 12px; color: var(--primary);">
+          0x...
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // BoonLink EIP-712 Domain
+    const BOONLINK_DOMAIN = {
+      name: 'BoonLink Payment',
+      version: '1',
+      chainId: 56, // BSC Mainnet
+      verifyingContract: '0x0000000000000000000000000000000000000000',
+    };
+
+    // EIP-712 Payment Types
+    const PAYMENT_TYPES = {
+      Payment: [
+        { name: 'orderId', type: 'string' },
+        { name: 'token', type: 'string' },
+        { name: 'amount', type: 'uint256' },
+        { name: 'recipient', type: 'address' },
+        { name: 'nonce', type: 'uint256' },
+        { name: 'deadline', type: 'uint256' },
+      ],
+    };
+
+    // Mock exchange rates
+    const RATES = {
+      USDT: 35.63,
+      USDC: 35.58,
+      ETH: 125000,
+    };
+
+    // State
+    let provider = null;
+    let signer = null;
+    let walletAddress = null;
+    let currentStep = 1;
+    let countdownInterval = null;
+
+    // DOM Elements
+    const connectBtn = document.getElementById('connectBtn');
+    const signBtn = document.getElementById('signBtn');
+    const newPaymentBtn = document.getElementById('newPaymentBtn');
+    const tokenSelect = document.getElementById('tokenSelect');
+    const amountInput = document.getElementById('amountInput');
+
+    // Network status detection
+    function updateNetworkStatus() {
+      const statusEl = document.getElementById('networkStatus');
+      const isOnline = navigator.onLine;
+      
+      statusEl.className = `network-status ${isOnline ? 'online' : 'offline'}`;
+      statusEl.innerHTML = `
+        <div class="status-dot ${isOnline ? 'online' : 'offline'}"></div>
+        <span>${isOnline ? 'Online - Ready for payment' : 'Offline - Signature mode active'}</span>
+      `;
+    }
+
+    window.addEventListener('online', updateNetworkStatus);
+    window.addEventListener('offline', updateNetworkStatus);
+    updateNetworkStatus();
+
+    // Connect wallet
+    connectBtn.addEventListener('click', async () => {
+      try {
+        if (typeof window.ethereum === 'undefined') {
+          alert('Please install MetaMask!');
+          return;
+        }
+
+        provider = new ethers.BrowserProvider(window.ethereum);
+        await provider.send('eth_requestAccounts', []);
+        signer = await provider.getSigner();
+        walletAddress = await signer.getAddress();
+
+        // Update UI
+        document.getElementById('walletAddress').textContent = 
+          `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`;
+        document.getElementById('walletInfo').classList.remove('hidden');
+        connectBtn.textContent = '✅ Connected';
+        connectBtn.disabled = true;
+
+        // Fetch mock balance
+        document.getElementById('walletBalance').textContent = '1,000 USDT';
+
+        // Move to step 2
+        goToStep(2);
+      } catch (error) {
+        console.error('Connection error:', error);
+        alert('Failed to connect wallet: ' + error.message);
+      }
+    });
+
+    // Update crypto amount on input change
+    function updateCryptoAmount() {
+      const amountTHB = parseFloat(amountInput.value) || 0;
+      const token = tokenSelect.value;
+      const rate = RATES[token];
+      const amountCrypto = amountTHB / rate;
+
+      document.getElementById('amountTHB').textContent = amountTHB.toLocaleString();
+      document.getElementById('amountCrypto').textContent = `≈ ${amountCrypto.toFixed(4)} ${token}`;
+      document.getElementById('rateInfo').textContent = `1 ${token} = ฿${rate.toLocaleString()}`;
+    }
+
+    tokenSelect.addEventListener('change', updateCryptoAmount);
+    amountInput.addEventListener('input', updateCryptoAmount);
+
+    // Sign offline payment
+    signBtn.addEventListener('click', async () => {
+      try {
+        if (!signer) {
+          alert('Please connect wallet first');
+          return;
+        }
+
+        signBtn.disabled = true;
+        signBtn.textContent = '⏳ Signing...';
+
+        const amountTHB = parseFloat(amountInput.value);
+        const token = tokenSelect.value;
+        const rate = RATES[token];
+        const amountCrypto = amountTHB / rate;
+        const orderId = `BL-${Date.now().toString(36).toUpperCase()}`;
+        const deadline = Math.floor(Date.now() / 1000) + 30 * 60; // 30 minutes
+
+        // Create payment message
+        const message = {
+          orderId: orderId,
+          token: token,
+          amount: ethers.parseUnits(amountCrypto.toFixed(6), 18),
+          recipient: '0x742d35Cc6634C0532925a3b844Bc9e7595f00000', // Demo merchant
+          nonce: BigInt(Date.now()),
+          deadline: BigInt(deadline),
+        };
+
+        // Sign with EIP-712
+        const signature = await signer.signTypedData(
+          BOONLINK_DOMAIN,
+          PAYMENT_TYPES,
+          message
+        );
+
+        console.log('Signature:', signature);
+
+        // Create QR data
+        const qrData = {
+          o: message.orderId,
+          t: message.token,
+          a: message.amount.toString(),
+          r: message.recipient,
+          n: message.nonce.toString(),
+          d: message.deadline.toString(),
+          s: signature,
+          f: walletAddress,
+        };
+
+        const qrString = btoa(JSON.stringify(qrData));
+
+        // Generate QR code
+        QRCode.toCanvas(document.getElementById('qrCanvas'), qrString, {
+          width: 280,
+          margin: 2,
+          color: {
+            dark: '#1e293b',
+            light: '#ffffff',
+          },
+        });
+
+        // Display signature
+        document.getElementById('signatureDisplay').textContent = 
+          signature.slice(0, 32) + '...' + signature.slice(-16);
+
+        // Start countdown
+        startCountdown(deadline);
+
+        // Move to step 3
+        goToStep(3);
+
+        signBtn.disabled = false;
+        signBtn.textContent = '✍️ Sign Offline Payment';
+      } catch (error) {
+        console.error('Signing error:', error);
+        alert('Failed to sign: ' + error.message);
+        signBtn.disabled = false;
+        signBtn.textContent = '✍️ Sign Offline Payment';
+      }
+    });
+
+    // Countdown timer
+    function startCountdown(deadline) {
+      if (countdownInterval) clearInterval(countdownInterval);
+
+      countdownInterval = setInterval(() => {
+        const now = Math.floor(Date.now() / 1000);
+        const remaining = deadline - now;
+
+        if (remaining <= 0) {
+          clearInterval(countdownInterval);
+          document.getElementById('countdown').textContent = 'EXPIRED';
+          document.getElementById('countdown').style.color = 'var(--error)';
+          return;
+        }
+
+        const minutes = Math.floor(remaining / 60);
+        const seconds = remaining % 60;
+        document.getElementById('countdown').textContent = 
+          `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+      }, 1000);
+    }
+
+    // New payment
+    newPaymentBtn.addEventListener('click', () => {
+      if (countdownInterval) clearInterval(countdownInterval);
+      goToStep(2);
+    });
+
+    // Step navigation
+    function goToStep(step) {
+      currentStep = step;
+
+      // Update step indicators
+      for (let i = 1; i <= 3; i++) {
+        const stepEl = document.getElementById(`step${i}`);
+        stepEl.classList.remove('active', 'completed');
+        if (i < step) stepEl.classList.add('completed');
+        if (i === step) stepEl.classList.add('active');
+      }
+
+      // Show/hide sections
+      document.getElementById('connectSection').classList.toggle('hidden', step !== 1);
+      document.getElementById('paymentSection').classList.toggle('hidden', step !== 2);
+      document.getElementById('qrSection').classList.toggle('hidden', step !== 3);
+    }
+
+    // Initial amount calculation
+    updateCryptoAmount();
+  </script>
+</body>
+</html>

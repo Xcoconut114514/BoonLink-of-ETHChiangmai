@@ -3,16 +3,16 @@
  * Creates visual UI cards for the payment flow
  */
 
-import type {
-  A2UICard,
-  A2UIComponent,
-  PaymentQuote,
-  PaymentOrder,
+import {
   PaymentStatus,
-  SupportedToken,
-  PromptPayData,
-  OfflineQueueStats,
   NetworkStatus,
+  type A2UICard,
+  type A2UIComponent,
+  type PaymentQuote,
+  type PaymentOrder,
+  type SupportedToken,
+  type PromptPayData,
+  type OfflineQueueStats,
 } from '../types/index.js';
 import { formatRate, formatCryptoAmount } from '../services/exchange.js';
 import { shortenTxHash, getExplorerUrl } from '../services/blockchain.js';

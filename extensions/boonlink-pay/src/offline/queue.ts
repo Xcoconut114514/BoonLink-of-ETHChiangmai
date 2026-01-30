@@ -3,13 +3,13 @@
  * Handles transaction queuing and retry for unreliable networks
  */
 
-import type {
-  PaymentOrder,
-  TransactionSignature,
-  OfflineQueueItem,
-  OfflineQueueStats,
-  NetworkStatus,
+import {
   PaymentStatus,
+  NetworkStatus,
+  type PaymentOrder,
+  type TransactionSignature,
+  type OfflineQueueItem,
+  type OfflineQueueStats,
 } from '../types/index.js';
 import type { QueueStorage, OrderStorage } from './storage.js';
 import type { IBlockchainService } from '../services/blockchain.js';
@@ -195,7 +195,8 @@ export class OfflineQueueManager {
       const items = this.queueStorage.getReadyItems();
 
       for (const item of items) {
-        if (this.networkStatus === NetworkStatus.OFFLINE) {
+        // Re-check network status which may have changed
+        if (this.networkStatus !== NetworkStatus.ONLINE && this.networkStatus !== NetworkStatus.WEAK) {
           break;
         }
 

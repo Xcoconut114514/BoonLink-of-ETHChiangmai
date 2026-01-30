@@ -1,0 +1,46 @@
+{
+  "id": "boonlink-pay",
+  "name": "BoonLink Payment",
+  "version": "0.1.0",
+  "description": "Instant crypto-to-THB payment via PromptPay for merchants in Thailand",
+  "author": "BoonLink Team",
+  "channels": ["telegram", "discord", "line"],
+  "capabilities": {
+    "mediaUnderstanding": true,
+    "offlineSupport": true,
+    "a2ui": true
+  },
+  "tools": [
+    "scan_promptpay_qr",
+    "get_crypto_quote",
+    "confirm_payment",
+    "check_payment_status",
+    "get_offline_queue"
+  ],
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "demoMode": {
+        "type": "boolean",
+        "default": true,
+        "description": "Enable demo mode with mock services"
+      },
+      "defaultToken": {
+        "type": "string",
+        "enum": ["USDT", "USDC", "ETH"],
+        "default": "USDT"
+      },
+      "maxAmountTHB": {
+        "type": "number",
+        "default": 10000,
+        "description": "Maximum single payment amount in THB"
+      },
+      "offlineQueueEnabled": {
+        "type": "boolean",
+        "default": true,
+        "description": "Enable offline transaction queue"
+      }
+    },
+    "additionalProperties": false
+  }
+}

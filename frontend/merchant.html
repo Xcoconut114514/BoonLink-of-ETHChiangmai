@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#000000">
+    <title>商家收款凭证 - BoonLink</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Language Switcher -->
+        <div class="language-switcher">
+            <button class="lang-btn active" data-lang="zh" onclick="switchLanguage('zh')">中文</button>
+            <button class="lang-btn" data-lang="en" onclick="switchLanguage('en')">English</button>
+            <button class="lang-btn" data-lang="th" onclick="switchLanguage('th')">ไทย</button>
+        </div>
+
+        <!-- Logo & Success -->
+        <div class="logo-container" style="padding-top: 40px;">
+            <div class="logo-icon">🔗</div>
+            <div style="font-size: 24px; font-weight: 600; margin-top: 12px;">BoonLink</div>
+            <div class="success-title" data-i18n="paymentReceived">收款成功</div>
+        </div>
+
+        <!-- Amount Display -->
+        <div class="amount-display">
+            <div class="amount-value" style="font-size: 64px;" id="amountTHB">฿40.00</div>
+            <div class="amount-currency" data-i18n="thb">泰铢</div>
+        </div>
+
+        <!-- Payment Details -->
+        <div class="app-content">
+            <div class="details-list">
+                <div class="detail-item">
+                    <span class="detail-label" data-i18n="payer">付款人</span>
+                    <span class="detail-value" id="payerAddress">0x1a2b...3c4d</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label" data-i18n="paymentMethod">支付方式</span>
+                    <span class="detail-value" id="paymentMethod">USDT (BSC)</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label" data-i18n="paymentAmount">支付金额</span>
+                    <span class="detail-value" id="amountCrypto">1.13 USDT</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label" data-i18n="time">时间</span>
+                    <span class="detail-value" id="timestamp">2025-01-30<br>14:30:25</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label" data-i18n="orderId">订单号</span>
+                    <span class="detail-value" id="orderId">BL20250130001</span>
+                </div>
+            </div>
+
+            <!-- Voice Announcement Button (Optional) -->
+            <button class="btn btn-secondary btn-large" onclick="playVoiceAnnouncement()" style="margin-top: 32px;">
+                <span style="font-size: 20px; margin-right: 8px;">🔊</span>
+                <span data-i18n="voiceAnnouncement">语音播报</span>
+            </button>
+
+            <!-- New Payment Button -->
+            <button class="btn btn-primary btn-large" onclick="newPayment()" style="margin-top: 16px;">
+                <span data-i18n="newPayment">新的支付</span>
+            </button>
+
+            <!-- Back to Home -->
+            <div style="text-align: center; margin-top: 24px;">
+                <a href="index.html" style="color: var(--text-secondary); font-size: 14px; text-decoration: none;">
+                    <span data-i18n="backToHome">返回首页</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Translations
+        const translations = {
+            zh: {
+                paymentReceived: '收款成功',
+                thb: '泰铢',
+                payer: '付款人',
+                paymentMethod: '支付方式',
+                paymentAmount: '支付金额',
+                time: '时间',
+                orderId: '订单号',
+                voiceAnnouncement: '语音播报',
+                newPayment: '新的支付',
+                backToHome: '返回首页',
+                voiceText: '收到付款 {amount} 泰铢'
+            },
+            en: {
+                paymentReceived: 'Payment Received',
+                thb: 'Thai Baht',
+                payer: 'Payer',
+                paymentMethod: 'Payment Method',
+                paymentAmount: 'Payment Amount',
+                time: 'Time',
+                orderId: 'Order ID',
+                voiceAnnouncement: 'Voice Announcement',
+                newPayment: 'New Payment',
+                backToHome: 'Back to Home',
+                voiceText: 'Received payment {amount} Thai Baht'
+            },
+            th: {
+                paymentReceived: 'ชำระเงินสำเร็จ',
+                thb: 'บาท',
+                payer: 'ผู้จ่าย',
+                paymentMethod: 'วิธีการชำระเงิน',
+                paymentAmount: 'จำนวนเงิน',
+                time: 'เวลา',
+                orderId: 'หมายเลขคำสั่งซื้อ',
+                voiceAnnouncement: 'ประกาศด้วยเสียง',
+                newPayment: 'การชำระเงินใหม่',
+                backToHome: 'กลับหน้าแรก',
+                voiceText: 'ได้รับเงิน {amount} บาท'
+            }
+        };
+
+        let currentLang = 'zh';
+
+        // Get payment data
+        const amountTHB = parseFloat(localStorage.getItem('amountTHB')) || 40;
+        const selectedToken = localStorage.getItem('selectedToken') || 'USDT';
+        const amountCrypto = parseFloat(localStorage.getItem('amountCrypto')) || 1.13;
+        const txHash = localStorage.getItem('txHash') || '0x1a2b...3c4d';
+        const timestamp = localStorage.getItem('timestamp') || '2025-01-30 14:30:25';
+        const orderId = localStorage.getItem('orderId') || 'BL20250130001';
+
+        // Update display
+        document.getElementById('amountTHB').textContent = `฿${amountTHB.toFixed(2)}`;
+        document.getElementById('payerAddress').textContent = txHash.substring(0, 10);
+        document.getElementById('paymentMethod').textContent = `${selectedToken} (BSC)`;
+
+        const cryptoFormatted = selectedToken === 'ETH'
+            ? amountCrypto.toFixed(6)
+            : amountCrypto.toFixed(2);
+        document.getElementById('amountCrypto').textContent = `${cryptoFormatted} ${selectedToken}`;
+
+        document.getElementById('timestamp').innerHTML = timestamp.replace(' ', '<br>');
+        document.getElementById('orderId').textContent = orderId;
+
+        function switchLanguage(lang) {
+            // Haptic feedback
+            if (navigator.vibrate) {
+                navigator.vibrate(5);
+            }
+
+            currentLang = lang;
+
+            // Update language buttons
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector(`[data-lang="${lang}"]`).classList.add('active');
+
+            // Update all translatable elements
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (translations[lang][key]) {
+                    el.textContent = translations[lang][key];
+                }
+            });
+        }
+
+        function playVoiceAnnouncement() {
+            // Haptic feedback
+            if (navigator.vibrate) {
+                navigator.vibrate([50, 30, 50]);
+            }
+
+            const voiceText = translations[currentLang].voiceText.replace('{amount}', amountTHB.toFixed(2));
+
+            // In real app, use Speech Synthesis API
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(voiceText);
+
+                // Set language
+                if (currentLang === 'zh') {
+                    utterance.lang = 'zh-CN';
+                } else if (currentLang === 'th') {
+                    utterance.lang = 'th-TH';
+                } else {
+                    utterance.lang = 'en-US';
+                }
+
+                utterance.rate = 0.9;
+                utterance.pitch = 1.0;
+
+                window.speechSynthesis.speak(utterance);
+            } else {
+                alert(voiceText);
+            }
+        }
+
+        function newPayment() {
+            // Haptic feedback
+            if (navigator.vibrate) {
+                navigator.vibrate(10);
+            }
+
+            // Clear payment data
+            localStorage.removeItem('amountTHB');
+            localStorage.removeItem('selectedToken');
+            localStorage.removeItem('amountCrypto');
+
+            // Go to amount page
+            window.location.href = 'amount.html';
+        }
+
+        // Auto-play voice on load (optional)
+        window.addEventListener('load', () => {
+            // Uncomment to auto-play
+            // setTimeout(playVoiceAnnouncement, 500);
+        });
+    </script>
+</body>
+</html>

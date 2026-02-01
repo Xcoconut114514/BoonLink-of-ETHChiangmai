@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#000000">
+    <meta name="description" content="BoonLink - Crypto to PromptPay Instant Payment">
+    <title>BoonLink - Crypto Pay</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Logo Section -->
+        <div class="logo-container" style="padding-top: 80px;">
+            <div class="logo-icon">🔗</div>
+            <div class="logo-text">BoonLink</div>
+            <div class="logo-subtitle">Crypto → PromptPay</div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="app-content">
+            <!-- Feature Cards -->
+            <div style="margin: 40px 0;">
+                <a href="amount.html?merchant=TUNGNGERN&amount=40" class="btn btn-primary btn-large" style="margin-bottom: 16px;">
+                    💳 开始扫码支付
+                </a>
+
+                <a href="merchant.html" class="btn btn-secondary btn-large">
+                    🏪 商家端演示
+                </a>
+            </div>
+
+            <!-- Info Cards -->
+            <div class="card">
+                <div class="card-header">支持代币</div>
+                <div style="display: flex; gap: 16px; margin-top: 12px;">
+                    <div style="flex: 1; text-align: center;">
+                        <div style="font-size: 32px;">💵</div>
+                        <div style="font-size: 13px; color: var(--text-secondary); margin-top: 4px;">USDT</div>
+                    </div>
+                    <div style="flex: 1; text-align: center;">
+                        <div style="font-size: 32px;">🔵</div>
+                        <div style="font-size: 13px; color: var(--text-secondary); margin-top: 4px;">USDC</div>
+                    </div>
+                    <div style="flex: 1; text-align: center;">
+                        <div style="font-size: 32px;">💎</div>
+                        <div style="font-size: 13px; color: var(--text-secondary); margin-top: 4px;">ETH</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">网络优势</div>
+                <div class="details-list" style="margin-top: 12px; background: transparent;">
+                    <div class="detail-item" style="padding: 8px 0;">
+                        <span class="detail-label">网络</span>
+                        <span class="detail-value">BSC (Binance Smart Chain)</span>
+                    </div>
+                    <div class="detail-item" style="padding: 8px 0;">
+                        <span class="detail-label">Gas 费</span>
+                        <span class="detail-value" style="color: var(--accent-green);">< $0.01</span>
+                    </div>
+                    <div class="detail-item" style="padding: 8px 0; border: none;">
+                        <span class="detail-label">结算速度</span>
+                        <span class="detail-value">~ 3 秒</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">为什么选择 BoonLink？</div>
+                <div style="margin-top: 12px; font-size: 14px; line-height: 1.8; color: var(--text-secondary);">
+                    <p style="margin-bottom: 8px;">✅ 国际卡无法用 PromptPay？用加密货币</p>
+                    <p style="margin-bottom: 8px;">✅ 即时到账，商户立即收到泰铢</p>
+                    <p style="margin-bottom: 8px;">✅ 低手续费，比换汇更划算</p>
+                    <p>✅ 支持离线签名，山区也能用</p>
+                </div>
+            </div>
+
+            <!-- Demo Flow -->
+            <div style="margin-top: 40px; text-align: center;">
+                <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 16px;">
+                    演示流程
+                </div>
+                <div style="display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 13px; color: var(--text-secondary);">
+                    <span>扫码</span>
+                    <span>→</span>
+                    <span>输入金额</span>
+                    <span>→</span>
+                    <span>选择代币</span>
+                    <span>→</span>
+                    <span>支付成功</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer Info -->
+        <div style="text-align: center; padding: 40px 20px 60px; font-size: 12px; color: var(--text-tertiary);">
+            <p>🔒 Non-custodial · 私钥不离手</p>
+            <p style="margin-top: 8px;">Made for Chiang Mai Hackathon 2025</p>
+        </div>
+    </div>
+
+    <script>
+        // Simple navigation helper
+        document.querySelectorAll('a[href]').forEach(link => {
+            link.addEventListener('click', function(e) {
+                // Haptic feedback simulation
+                if (navigator.vibrate) {
+                    navigator.vibrate(10);
+                }
+            });
+        });
+
+        // Store demo data
+        localStorage.setItem('merchantName', 'TUNGNGERN（）');
+        localStorage.setItem('amountTHB', '40');
+    </script>
+</body>
+</html>

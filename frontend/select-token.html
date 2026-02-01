@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#000000">
+    <title>选择支付方式 - BoonLink</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <div class="app-header">
+            <div class="header-left">
+                <button class="icon-btn" onclick="window.history.back()">←</button>
+            </div>
+            <div class="header-title">选择支付方式</div>
+            <div class="header-right"></div>
+        </div>
+
+        <!-- Content -->
+        <div class="app-content">
+            <!-- Amount Info -->
+            <div class="card">
+                <div style="text-align: center; padding: 10px 0;">
+                    <div style="font-size: 14px; color: var(--text-secondary);">付款金额</div>
+                    <div style="font-size: 32px; font-weight: 600; margin-top: 8px;" id="amountTHB">฿40.00 THB</div>
+                </div>
+            </div>
+
+            <!-- Token List -->
+            <div class="token-list" style="margin-top: 24px;">
+                <div class="token-item selected" data-token="USDT" onclick="selectToken('USDT')">
+                    <div class="token-icon">💵</div>
+                    <div class="token-info">
+                        <div class="token-symbol">USDT</div>
+                        <div class="token-name">Tether USD</div>
+                    </div>
+                    <div class="token-amount">
+                        <div class="token-converted" id="usdt-amount">≈ 1.13 USDT</div>
+                        <div class="token-balance">余额: 100.00 USDT</div>
+                    </div>
+                </div>
+
+                <div class="token-item" data-token="USDC" onclick="selectToken('USDC')">
+                    <div class="token-icon">🔵</div>
+                    <div class="token-info">
+                        <div class="token-symbol">USDC</div>
+                        <div class="token-name">USD Coin</div>
+                    </div>
+                    <div class="token-amount">
+                        <div class="token-converted" id="usdc-amount">≈ 1.13 USDC</div>
+                        <div class="token-balance">余额: 50.00 USDC</div>
+                    </div>
+                </div>
+
+                <div class="token-item" data-token="ETH" onclick="selectToken('ETH')">
+                    <div class="token-icon">💎</div>
+                    <div class="token-info">
+                        <div class="token-symbol">ETH</div>
+                        <div class="token-name">Ethereum</div>
+                    </div>
+                    <div class="token-amount">
+                        <div class="token-converted" id="eth-amount">≈ 0.00033 ETH</div>
+                        <div class="token-balance">余额: 0.5 ETH</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Exchange Rate Info -->
+            <div class="hint" style="margin-top: 24px;">
+                <span class="hint-icon">ℹ️</span>
+                <span class="hint-text">汇率每 5 分钟更新，支付时实时锁定</span>
+            </div>
+        </div>
+
+        <!-- Fixed Bottom Button -->
+        <div class="app-footer">
+            <button class="btn btn-primary btn-large" id="confirmButton" onclick="proceedToPayment()">
+                确认支付 1.13 USDT
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Exchange rates (THB per token)
+        const rates = {
+            USDT: 35.40,  // 1 USDT = 35.40 THB (with discount)
+            USDC: 35.40,  // 1 USDC = 35.40 THB
+            ETH: 120000,  // 1 ETH = 120,000 THB
+        };
+
+        // Get amount from URL or localStorage
+        const urlParams = new URLSearchParams(window.location.search);
+        const amountTHB = parseFloat(urlParams.get('amount')) || parseFloat(localStorage.getItem('amountTHB')) || 40;
+        const merchantName = urlParams.get('merchant') || localStorage.getItem('merchantName') || 'TUNGNGERN（）';
+
+        let selectedToken = 'USDT';
+
+        // Update amount display
+        document.getElementById('amountTHB').textContent = `฿${amountTHB.toFixed(2)} THB`;
+
+        // Calculate and display token amounts
+        function updateTokenAmounts() {
+            // USDT
+            const usdtAmount = amountTHB / rates.USDT;
+            document.getElementById('usdt-amount').textContent = `≈ ${usdtAmount.toFixed(2)} USDT`;
+
+            // USDC
+            const usdcAmount = amountTHB / rates.USDC;
+            document.getElementById('usdc-amount').textContent = `≈ ${usdcAmount.toFixed(2)} USDC`;
+
+            // ETH
+            const ethAmount = amountTHB / rates.ETH;
+            document.getElementById('eth-amount').textContent = `≈ ${ethAmount.toFixed(6)} ETH`;
+        }
+
+        function selectToken(token) {
+            // Haptic feedback
+            if (navigator.vibrate) {
+                navigator.vibrate(5);
+            }
+
+            selectedToken = token;
+
+            // Update UI
+            document.querySelectorAll('.token-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            document.querySelector(`[data-token="${token}"]`).classList.add('selected');
+
+            // Update button text
+            const amount = amountTHB / rates[token];
+            let formatted;
+
+            if (token === 'ETH') {
+                formatted = amount.toFixed(6);
+            } else {
+                formatted = amount.toFixed(2);
+            }
+
+            document.getElementById('confirmButton').textContent = `确认支付 ${formatted} ${token}`;
+
+            // Save selection
+            localStorage.setItem('selectedToken', token);
+        }
+
+        function proceedToPayment() {
+            // Haptic feedback
+            if (navigator.vibrate) {
+                navigator.vibrate(10);
+            }
+
+            const amount = amountTHB / rates[selectedToken];
+
+            // Save payment data
+            localStorage.setItem('amountTHB', amountTHB);
+            localStorage.setItem('merchantName', merchantName);
+            localStorage.setItem('selectedToken', selectedToken);
+            localStorage.setItem('amountCrypto', amount.toFixed(selectedToken === 'ETH' ? 6 : 2));
+            localStorage.setItem('exchangeRate', rates[selectedToken]);
+
+            // Show loading for 1 second, then go to success
+            const button = document.getElementById('confirmButton');
+            button.textContent = '处理中...';
+            button.disabled = true;
+
+            setTimeout(() => {
+                window.location.href = 'success.html';
+            }, 1500);
+        }
+
+        // Initialize
+        updateTokenAmounts();
+
+        // Restore previous selection if exists
+        const savedToken = localStorage.getItem('selectedToken');
+        if (savedToken && ['USDT', 'USDC', 'ETH'].includes(savedToken)) {
+            selectToken(savedToken);
+        }
+    </script>
+</body>
+</html>

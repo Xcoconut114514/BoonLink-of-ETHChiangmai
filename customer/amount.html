@@ -188,6 +188,33 @@
             background: var(--accent-green);
             color: white;
         }
+        
+        /* Fixed pay button for QR amount */
+        .wc-fixed-pay-container {
+            margin: 20px 16px;
+            padding-bottom: env(safe-area-inset-bottom, 20px);
+        }
+        .wc-fixed-pay-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #07C160 0%, #06AD56 100%);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(7, 193, 96, 0.3);
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+        .wc-fixed-pay-btn:active {
+            transform: scale(0.98);
+            box-shadow: 0 2px 8px rgba(7, 193, 96, 0.2);
+        }
+        .wc-fixed-pay-btn:disabled {
+            background: #666;
+            box-shadow: none;
+        }
     </style>
 </head>
 <body>
@@ -224,6 +251,13 @@
             <span class="wc-note-icon">📝</span>
             <span class="wc-note-text" id="notePreview">添加备注（可选）</span>
             <span class="wc-note-arrow">›</span>
+        </div>
+
+        <!-- Fixed amount pay button (visible when amountFromQR is true) -->
+        <div class="wc-fixed-pay-container" id="fixedPayContainer" style="display:none;">
+            <button class="wc-fixed-pay-btn" id="fixedPayButton" onclick="showConfirmModal()">
+                确认付款
+            </button>
         </div>
 
         <!-- Brand -->
@@ -359,6 +393,10 @@
         if (amountFromQR && qrAmount !== '0') {
             currentAmount = qrAmount;
             document.getElementById('cursor').style.display = 'none';
+            // Show fixed pay button instead of numpad
+            document.getElementById('fixedPayContainer').style.display = 'block';
+            // Disable amount card click interaction
+            document.querySelector('.wc-amount-card').style.cursor = 'default';
             updateDisplay();
         }
 

@@ -213,21 +213,37 @@
 
         // Scan success handler
         async function onScanSuccess(decodedText) {
+            console.log('📷 Scanned raw text:', decodedText);
+            
             try {
-                const qrData = JSON.parse(decodedText);
-
-                if (qrData.type !== 'BOONLINK_PAYMENT') {
-                    console.log('Not a BoonLink payment QR');
+                let qrData;
+                
+                // Try JSON parse first
+                try {
+                    qrData = JSON.parse(decodedText);
+                    console.log('✅ JSON parsed:', qrData);
+                } catch (parseError) {
+                    console.log('❌ JSON parse failed, not a BoonLink QR');
                     return;
                 }
+
+                // Check if this is a BoonLink payment
+                if (!qrData || qrData.type !== 'BOONLINK_PAYMENT') {
+                    console.log('❌ Not a BoonLink payment QR, type:', qrData?.type);
+                    return;
+                }
+                
+                console.log('✅ Valid BoonLink payment detected');
 
                 // Pause scanner
                 await html5QrcodeScanner.pause();
 
                 const paymentData = qrData.data;
+                console.log('📦 Payment data:', paymentData);
 
                 // Validate payment
                 const validation = await validateIncomingPayment(paymentData, cache);
+                console.log('🔍 Validation result:', validation);
 
                 if (!validation.valid) {
                     if (validation.error === 'DUPLICATE_PAYMENT') {
@@ -264,7 +280,7 @@
                 }
 
             } catch (error) {
-                console.log('Not a valid QR:', error);
+                console.error('❌ Scan error:', error);
             }
         }
 

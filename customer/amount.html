@@ -109,26 +109,21 @@
     </div>
 
     <!-- Note Modal -->
-    <div class="wc-modal-overlay" id="noteModal" onclick="closeNoteModal(event)">
-        <div class="wc-modal" style="max-width: 340px;" onclick="event.stopPropagation()">
+    <div class="wc-modal-overlay" id="noteModal">
+        <div class="wc-modal wc-note-modal">
             <div class="wc-modal-header">
                 <div class="wc-modal-title">添加备注</div>
+                <button class="wc-modal-close" onclick="closeNoteModal()">✕</button>
             </div>
-            <div class="wc-modal-body" style="padding: 16px;">
-                <textarea id="noteInput" placeholder="例如：一份打抛饭、两杯奶茶..." maxlength="100" style="
-                    width: 100%;
-                    height: 80px;
-                    padding: 12px;
-                    border: 1px solid var(--border-color);
-                    border-radius: 8px;
-                    background: var(--bg-input);
-                    color: var(--text-primary);
-                    font-size: 14px;
-                    resize: none;
-                    font-family: inherit;
-                "></textarea>
-                <div style="text-align: right; font-size: 12px; color: var(--text-tertiary); margin-top: 6px;">
-                    <span id="charCount">0</span>/100
+            <div class="wc-modal-body">
+                <textarea id="noteInput" class="wc-note-textarea" placeholder="例如：一份打抛饭、两杯奶茶..." maxlength="100" oninput="document.getElementById('charCount').textContent=this.value.length"></textarea>
+                <div class="wc-note-count"><span id="charCount">0</span>/100</div>
+                <div class="wc-quick-tags">
+                    <span class="wc-quick-tag" onclick="addTag('打抛饭')">打抛饭</span>
+                    <span class="wc-quick-tag" onclick="addTag('泰式奶茶')">泰式奶茶</span>
+                    <span class="wc-quick-tag" onclick="addTag('芒果糯米饭')">芒果糯米饭</span>
+                    <span class="wc-quick-tag" onclick="addTag('冬阴功')">冬阴功</span>
+                    <span class="wc-quick-tag" onclick="addTag('椰子水')">椰子水</span>
                 </div>
             </div>
             <div class="wc-modal-footer">
@@ -154,13 +149,63 @@
             flex: 1;
             font-size: 14px;
             color: var(--text-secondary);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
-        .wc-note-text.has-note {
+        .wc-note-text.has-note { color: var(--text-primary); }
+        .wc-note-arrow { font-size: 18px; color: var(--text-tertiary); }
+        
+        /* Note Modal */
+        .wc-note-modal { max-width: 340px; }
+        .wc-modal-close {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 16px;
+            cursor: pointer;
+            padding: 4px;
+        }
+        .wc-note-textarea {
+            width: 100%;
+            height: 80px;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--bg-input);
             color: var(--text-primary);
+            font-size: 14px;
+            resize: none;
+            font-family: inherit;
+            box-sizing: border-box;
         }
-        .wc-note-arrow {
-            font-size: 18px;
+        .wc-note-textarea:focus {
+            outline: none;
+            border-color: var(--accent-green);
+        }
+        .wc-note-count {
+            text-align: right;
+            font-size: 11px;
             color: var(--text-tertiary);
+            margin-top: 6px;
+        }
+        .wc-quick-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        .wc-quick-tag {
+            padding: 6px 12px;
+            background: var(--bg-input);
+            border-radius: 14px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+        .wc-quick-tag:active {
+            background: var(--accent-green);
+            color: white;
         }
     </style>
 
@@ -340,29 +385,30 @@
         function openNoteModal() {
             document.getElementById('noteModal').classList.add('show');
             document.getElementById('noteInput').value = paymentNote;
-            updateCharCount();
+            document.getElementById('charCount').textContent = paymentNote.length;
         }
 
-        function closeNoteModal(event) {
-            if (event && event.target !== document.getElementById('noteModal')) return;
+        function closeNoteModal() {
             document.getElementById('noteModal').classList.remove('show');
         }
 
-        function updateCharCount() {
-            const count = document.getElementById('noteInput').value.length;
-            document.getElementById('charCount').textContent = count;
+        function addTag(tag) {
+            const input = document.getElementById('noteInput');
+            const current = input.value;
+            input.value = current ? current + '、' + tag : tag;
+            document.getElementById('charCount').textContent = input.value.length;
         }
 
         function clearNote() {
             document.getElementById('noteInput').value = '';
-            updateCharCount();
+            document.getElementById('charCount').textContent = '0';
         }
 
         function saveNote() {
             paymentNote = document.getElementById('noteInput').value.trim();
             localStorage.setItem('paymentNote', paymentNote);
             updateNotePreview();
-            document.getElementById('noteModal').classList.remove('show');
+            closeNoteModal();
         }
 
         function updateNotePreview() {
@@ -376,19 +422,10 @@
             }
         }
 
-        // Listen for note input
-        document.getElementById('noteInput')?.addEventListener('input', updateCharCount);
-
         function goBack() {
             localStorage.removeItem('amountFromQR');
             window.location.href = '/customer/scan.html';
         }
-
-        // Prevent zooming on double tap
-        document.addEventListener('touchend', function(e) {
-            e.preventDefault();
-            e.target.click();
-        }, { passive: false });
     </script>
 </body>
 </html>

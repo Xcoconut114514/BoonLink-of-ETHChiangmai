@@ -467,30 +467,73 @@
         }
         
         // ============================================
-        // Order Polling - Check Server API for new payments every 3 seconds
+        // Blockchain Wallet Monitor - Watch for REAL on-chain payments
+        // Monitors 0x6778404839E5D817c35ba72Fa5cD45a2716d9905 for transfers
         // ============================================
-        let lastPollTime = Date.now();
+        let lastPollTime = Date.now() - 60000; // Start from 1 minute ago
         let pollingInterval = null;
+        let processedHashes = new Set();
         
         function startOrderPolling() {
-            console.log('🔄 Starting server order polling...');
-            lastPollTime = Date.now();
+            console.log('🔄 Starting blockchain wallet monitor...');
+            console.log('💰 Watching wallet: 0x6778404839E5D817c35ba72Fa5cD45a2716d9905');
             
             // Check immediately once
-            checkNewOrders();
+            checkBlockchainTransfers();
             
-            // Then poll every 3 seconds
-            pollingInterval = setInterval(checkNewOrders, 3000);
+            // Then poll every 5 seconds (blockchain is slower)
+            pollingInterval = setInterval(checkBlockchainTransfers, 5000);
         }
         
-        async function checkNewOrders() {
+        async function checkBlockchainTransfers() {
             try {
-                // Poll server API for new orders
+                // Poll blockchain wallet monitor API
+                const response = await fetch(`/api/watch-wallet?since=${lastPollTime}`);
+                const data = await response.json();
+                
+                if (data.transfers && data.transfers.length > 0) {
+                    for (const tx of data.transfers) {
+                        // Skip already processed
+                        if (processedHashes.has(tx.hash)) continue;
+                        processedHashes.add(tx.hash);
+                        
+                        console.log('💰 Blockchain payment detected:', tx);
+                        
+                        // Update stats
+                        const stats = JSON.parse(localStorage.getItem('merchantStats') || '{"amount":0,"count":0}');
+                        stats.amount += tx.amountTHB || 0;
+                        stats.count += 1;
+                        localStorage.setItem('merchantStats', JSON.stringify(stats));
+                        
+                        // Refresh display
+                        loadStats();
+                        
+                        // Play Thai voice: "BoonLink รับเงินแล้ว X บาท"
+                        await playBlockchainVoice(tx.amountTHB, tx.token);
+                        
+                        // Show notification
+                        showBlockchainNotification(tx);
+                    }
+                }
+                
+                // Update poll time
+                lastPollTime = data.timestamp || Date.now();
+                
+            } catch (error) {
+                console.error('❌ Blockchain monitor error:', error);
+                // Fallback to order API
+                checkOrdersAPI();
+            }
+        }
+        
+        // Fallback: Also check the order API
+        async function checkOrdersAPI() {
+            try {
                 const response = await fetch(`/api/orders?since=${lastPollTime}&merchantId=`);
                 const data = await response.json();
                 
                 if (data.orders && data.orders.length > 0) {
-                    console.log('📥 Found new orders from server:', data.orders.length);
+                    console.log('📥 Found orders from API:', data.orders.length);
                     
                     for (const order of data.orders) {
                         // Update stats
@@ -516,6 +559,87 @@
             } catch (error) {
                 console.error('❌ Order polling failed:', error);
             }
+        }
+        
+        // Thai voice for blockchain payments: "BoonLink รับเงินแล้ว X บาท"
+        async function playBlockchainVoice(amountTHB, token) {
+            if (!('speechSynthesis' in window)) return;
+            
+            // Wait for voices
+            let voices = window.speechSynthesis.getVoices();
+            if (voices.length === 0) {
+                await new Promise(resolve => {
+                    window.speechSynthesis.onvoiceschanged = () => {
+                        voices = window.speechSynthesis.getVoices();
+                        resolve();
+                    };
+                    setTimeout(resolve, 500);
+                });
+            }
+            
+            const formattedAmount = Math.round(amountTHB || 0);
+            
+            // Always use Thai for blockchain payments as requested
+            const text = `BoonLink รับเงินแล้ว ${formattedAmount} บาท`;
+            
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'th-TH';
+            utterance.rate = 0.9;
+            utterance.volume = 1.0;
+            
+            // Try to find Thai voice
+            const thaiVoice = voices.find(v => v.lang.startsWith('th'));
+            if (thaiVoice) utterance.voice = thaiVoice;
+            
+            window.speechSynthesis.cancel();
+            window.speechSynthesis.speak(utterance);
+            
+            console.log('🔊 Thai voice:', text);
+            
+            // Vibrate pattern
+            if (navigator.vibrate) {
+                navigator.vibrate([300, 100, 300, 100, 300]);
+            }
+        }
+        
+        function showBlockchainNotification(tx) {
+            const toast = document.createElement('div');
+            toast.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div style="font-size: 36px;">⛓️💰</div>
+                    <div>
+                        <div style="font-size: 18px; font-weight: 700; color: #07C160;">
+                            ฿${(tx.amountTHB || 0).toLocaleString()} 到账！
+                        </div>
+                        <div style="font-size: 14px; color: #FF9500; margin-top: 4px;">
+                            ${tx.amount} ${tx.token} (链上确认)
+                        </div>
+                        <div style="font-size: 11px; color: var(--text-tertiary); margin-top: 4px;">
+                            ${tx.hash.slice(0, 10)}...${tx.hash.slice(-8)}
+                        </div>
+                    </div>
+                </div>
+            `;
+            toast.style.cssText = `
+                position: fixed;
+                top: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: linear-gradient(135deg, #1a2a1a 0%, #0d1a0d 100%);
+                padding: 20px 24px;
+                border-radius: 16px;
+                box-shadow: 0 8px 32px rgba(7, 193, 96, 0.4);
+                z-index: 10000;
+                animation: slideDown 0.3s ease;
+                border: 2px solid #07C160;
+            `;
+            
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.animation = 'slideUp 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 6000);
         }
         
         async function playReceiveVoice(amount) {

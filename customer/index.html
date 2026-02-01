@@ -232,6 +232,7 @@
         }
         .action-btn-icon.orange { background: #FF9500; }
         .action-btn-icon.blue { background: #007AFF; }
+        .action-btn-icon.purple { background: #AF52DE; }
         .action-btn-content {
             flex: 1;
             text-align: left;
@@ -523,6 +524,14 @@
                     </div>
                     <span class="action-btn-arrow">›</span>
                 </a>
+                <a href="/customer/offline-pay.html" class="action-btn">
+                    <div class="action-btn-icon purple">📵</div>
+                    <div class="action-btn-content">
+                        <div class="action-btn-title">离线支付</div>
+                        <div class="action-btn-desc">生成付款码让商家扫描收款</div>
+                    </div>
+                    <span class="action-btn-arrow">›</span>
+                </a>
                 <div class="action-btn" onclick="openLimitModal()">
                     <div class="action-btn-icon orange">⚙️</div>
                     <div class="action-btn-content">
@@ -789,6 +798,8 @@
                 payLimitDesc: '设置每日支付上限保护资产',
                 txHistory: '交易记录',
                 txHistoryDesc: '查看历史支付记录',
+                offlinePayTitle: '离线支付',
+                offlinePayDesc: '生成付款码让商家扫描收款',
                 nonCustodial: 'Non-custodial · 私钥不离手',
                 limitTitle: '支付限额设置',
                 systemLimit: '系统安全限制',
@@ -820,6 +831,8 @@
                 payLimitDesc: 'Set daily limits to protect assets',
                 txHistory: 'Transaction History',
                 txHistoryDesc: 'View past payment records',
+                offlinePayTitle: 'Offline Pay',
+                offlinePayDesc: 'Generate payment QR for merchant to scan',
                 nonCustodial: 'Non-custodial · Your keys, your coins',
                 limitTitle: 'Payment Limit Settings',
                 systemLimit: 'System Security Limits',
@@ -851,6 +864,8 @@
                 payLimitDesc: 'ตั้งวงเงินรายวันเพื่อปกป้องสินทรัพย์',
                 txHistory: 'ประวัติธุรกรรม',
                 txHistoryDesc: 'ดูรายการชำระเงินที่ผ่านมา',
+                offlinePayTitle: 'จ่ายออฟไลน์',
+                offlinePayDesc: 'สร้าง QR ให้ร้านค้าสแกนรับเงิน',
                 nonCustodial: 'Non-custodial · คีย์ของคุณ เหรียญของคุณ',
                 limitTitle: 'ตั้งค่าวงเงิน',
                 systemLimit: 'วงเงินความปลอดภัยระบบ',
@@ -912,10 +927,12 @@
             const actionDescs = document.querySelectorAll('.action-btn-desc');
             if (actionTitles[0]) actionTitles[0].textContent = t('scanPay');
             if (actionDescs[0]) actionDescs[0].textContent = t('scanPayDesc');
-            if (actionTitles[1]) actionTitles[1].textContent = t('payLimit');
-            if (actionDescs[1]) actionDescs[1].textContent = t('payLimitDesc');
-            if (actionTitles[2]) actionTitles[2].textContent = t('txHistory');
-            if (actionDescs[2]) actionDescs[2].textContent = t('txHistoryDesc');
+            if (actionTitles[1]) actionTitles[1].textContent = t('offlinePayTitle');
+            if (actionDescs[1]) actionDescs[1].textContent = t('offlinePayDesc');
+            if (actionTitles[2]) actionTitles[2].textContent = t('payLimit');
+            if (actionDescs[2]) actionDescs[2].textContent = t('payLimitDesc');
+            if (actionTitles[3]) actionTitles[3].textContent = t('txHistory');
+            if (actionDescs[3]) actionDescs[3].textContent = t('txHistoryDesc');
             
             // Footer
             const footerText = document.querySelector('.home-footer-logo span');

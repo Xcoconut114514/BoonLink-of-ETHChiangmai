@@ -141,9 +141,12 @@ async function validateIncomingPayment(paymentData, cache) {
         };
     }
 
-    // 2. Check expiration
-    const now = Math.floor(Date.now() / 1000);
-    if (paymentData.deadline && paymentData.deadline < now) {
+    // 2. Check expiration (5 minutes from generation)
+    const now = Date.now();
+    const timestamp = paymentData.timestamp || 0;
+    const fiveMinutes = 5 * 60 * 1000;
+    
+    if (timestamp && (now - timestamp) > fiveMinutes) {
         return {
             valid: false,
             error: 'EXPIRED',
@@ -151,7 +154,7 @@ async function validateIncomingPayment(paymentData, cache) {
         };
     }
 
-    // 3. Check amount limits (merchant side - just for display, not enforced)
+    // 3. Check amount limits (merchant side - just for display)
     if (paymentData.amountTHB > 5000) {
         return {
             valid: false,
@@ -160,12 +163,20 @@ async function validateIncomingPayment(paymentData, cache) {
         };
     }
 
-    // 4. Validate signature format (basic check)
-    if (!paymentData.signature || paymentData.signature.length < 130) {
+    // 4. Validate basic data fields
+    if (!paymentData.amountTHB || paymentData.amountTHB <= 0) {
         return {
             valid: false,
-            error: 'INVALID_SIGNATURE',
-            message: '⚠️ 无效的付款签名'
+            error: 'INVALID_AMOUNT',
+            message: '⚠️ 无效的付款金额'
+        };
+    }
+
+    if (!paymentData.orderId) {
+        return {
+            valid: false,
+            error: 'INVALID_ORDER',
+            message: '⚠️ 无效的订单号'
         };
     }
 

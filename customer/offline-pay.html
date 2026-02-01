@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#191919">
+    <title>离线支付 - BoonLink</title>
+    <link rel="stylesheet" href="/shared/css/wechat-dark.css">
+    <script src="https://unpkg.com/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <style>
+        /* Amount input area */
+        .amount-input-area {
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            margin: 16px;
+            padding: 24px;
+            text-align: center;
+        }
+        .amount-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+        .amount-display {
+            display: flex;
+            align-items: baseline;
+            justify-content: center;
+            gap: 4px;
+        }
+        .currency-symbol {
+            font-size: 28px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        .amount-value {
+            font-size: 48px;
+            font-weight: 600;
+            color: var(--text-primary);
+            background: none;
+            border: none;
+            text-align: center;
+            width: 180px;
+            outline: none;
+            font-family: inherit;
+        }
+        .amount-value::placeholder {
+            color: var(--text-tertiary);
+        }
+        
+        /* Note card */
+        .note-card {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 0 16px 16px;
+            padding: 14px 16px;
+            background: var(--bg-secondary);
+            border-radius: 10px;
+            cursor: pointer;
+        }
+        .note-icon { font-size: 18px; }
+        .note-text {
+            flex: 1;
+            font-size: 14px;
+            color: var(--text-secondary);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .note-text.has-note { color: var(--text-primary); }
+        .note-arrow { font-size: 20px; color: var(--text-tertiary); }
+        
+        /* Generate QR button */
+        .generate-btn {
+            display: block;
+            margin: 0 16px 16px;
+            padding: 16px;
+            background: linear-gradient(135deg, #AF52DE 0%, #8B3EBF 100%);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 17px;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: center;
+            width: calc(100% - 32px);
+        }
+        .generate-btn:active {
+            opacity: 0.9;
+        }
+        .generate-btn:disabled {
+            background: var(--bg-tertiary);
+            color: var(--text-tertiary);
+        }
+        
+        /* QR Code display area */
+        .qr-container {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            margin: 16px;
+            padding: 24px;
+            background: var(--bg-secondary);
+            border-radius: 16px;
+        }
+        .qr-container.show {
+            display: flex;
+        }
+        .qr-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+        .qr-hint {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+        }
+        .qr-box {
+            background: white;
+            padding: 16px;
+            border-radius: 12px;
+        }
+        #qrCanvas {
+            display: block;
+        }
+        .qr-amount {
+            margin-top: 20px;
+            font-size: 32px;
+            font-weight: 600;
+            color: var(--accent-green);
+        }
+        .qr-expire {
+            margin-top: 8px;
+            font-size: 13px;
+            color: var(--text-tertiary);
+        }
+        .qr-countdown {
+            color: #FF9500;
+            font-weight: 600;
+        }
+        
+        /* Regenerate button */
+        .regenerate-btn {
+            margin-top: 20px;
+            padding: 12px 32px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 15px;
+            cursor: pointer;
+        }
+        
+        /* Note Modal */
+        .note-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            display: none;
+        }
+        .note-modal-overlay.show {
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+        }
+        .note-modal {
+            width: 100%;
+            max-width: 428px;
+            background: var(--bg-secondary);
+            border-radius: 16px 16px 0 0;
+            padding-bottom: env(safe-area-inset-bottom, 0);
+        }
+        .note-modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .note-modal-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        .note-modal-close {
+            background: none;
+            border: none;
+            font-size: 18px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 4px 8px;
+        }
+        .note-modal-body {
+            padding: 16px;
+        }
+        .note-textarea {
+            width: 100%;
+            height: 90px;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            background: var(--bg-input);
+            color: var(--text-primary);
+            font-size: 15px;
+            resize: none;
+            font-family: inherit;
+            box-sizing: border-box;
+        }
+        .note-textarea:focus {
+            outline: none;
+            border-color: var(--accent-green);
+        }
+        .note-modal-footer {
+            display: flex;
+            gap: 12px;
+            padding: 12px 16px;
+            border-top: 1px solid var(--border-color);
+        }
+        .note-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .note-btn-cancel {
+            background: var(--bg-card);
+            color: var(--text-primary);
+        }
+        .note-btn-confirm {
+            background: var(--accent-green);
+            color: white;
+        }
+        
+        /* Numpad overlay */
+        .numpad-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.4);
+            z-index: 500;
+            display: none;
+        }
+        .numpad-overlay.show {
+            display: block;
+        }
+        
+        /* Numpad */
+        .numpad-container {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            max-width: 428px;
+            margin: 0 auto;
+            transform: translateY(100%);
+            transition: transform 0.25s ease-out;
+            z-index: 501;
+        }
+        .numpad-container.show {
+            transform: translateY(0);
+        }
+        .numpad-inner {
+            background: #2C2C2E;
+            border-radius: 16px 16px 0 0;
+            padding: 6px;
+            padding-bottom: calc(6px + env(safe-area-inset-bottom, 0));
+        }
+        .numpad-row {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 6px;
+        }
+        .numpad-row:last-child {
+            margin-bottom: 0;
+        }
+        .numpad-key {
+            flex: 1;
+            height: 54px;
+            border: none;
+            border-radius: 8px;
+            font-size: 24px;
+            font-weight: 400;
+            background: #636366;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .numpad-key:active {
+            background: #8E8E93;
+        }
+        .numpad-key.action {
+            background: #48484A;
+            font-size: 18px;
+        }
+        .numpad-key.confirm {
+            background: var(--accent-green);
+        }
+        .numpad-key.confirm:active {
+            background: #05a050;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <div class="wc-header">
+            <button class="wc-header-btn" onclick="goBack()">✕</button>
+            <div class="wc-header-title" id="pageTitle">离线支付</div>
+            <button class="wc-header-btn">⋯</button>
+        </div>
+        
+        <!-- Input Section (shown when not showing QR) -->
+        <div id="inputSection">
+            <!-- Amount Input -->
+            <div class="amount-input-area" onclick="showNumpad()">
+                <div class="amount-label" id="amountLabel">输入金额</div>
+                <div class="amount-display">
+                    <span class="currency-symbol">฿</span>
+                    <input type="text" class="amount-value" id="amountInput" readonly placeholder="0" onclick="event.stopPropagation(); showNumpad();">
+                </div>
+            </div>
+            
+            <!-- Note -->
+            <div class="note-card" onclick="openNoteModal()">
+                <span class="note-icon">📝</span>
+                <span class="note-text" id="noteDisplay">添加备注</span>
+                <span class="note-arrow">›</span>
+            </div>
+            
+            <!-- Generate QR Button -->
+            <button class="generate-btn" id="generateBtn" onclick="generateQR()" disabled>
+                <span id="generateBtnText">生成付款码</span>
+            </button>
+        </div>
+        
+        <!-- QR Display Section -->
+        <div class="qr-container" id="qrSection">
+            <div class="qr-title" id="qrTitle">请让商家扫码收款</div>
+            <div class="qr-hint" id="qrHint">付款码有效期5分钟</div>
+            <div class="qr-box">
+                <canvas id="qrCanvas"></canvas>
+            </div>
+            <div class="qr-amount" id="qrAmount">฿0</div>
+            <div class="qr-expire">
+                <span id="expireLabel">有效期</span>: <span class="qr-countdown" id="countdown">5:00</span>
+            </div>
+            <button class="regenerate-btn" onclick="resetToInput()" id="regenerateBtn">重新生成</button>
+        </div>
+        
+        <!-- Numpad Overlay -->
+        <div class="numpad-overlay" id="numpadOverlay" onclick="hideNumpad()"></div>
+        
+        <!-- Numpad -->
+        <div class="numpad-container" id="numpadContainer">
+            <div class="numpad-inner">
+                <div class="numpad-row">
+                    <button class="numpad-key" onclick="inputDigit('1')">1</button>
+                    <button class="numpad-key" onclick="inputDigit('2')">2</button>
+                    <button class="numpad-key" onclick="inputDigit('3')">3</button>
+                </div>
+                <div class="numpad-row">
+                    <button class="numpad-key" onclick="inputDigit('4')">4</button>
+                    <button class="numpad-key" onclick="inputDigit('5')">5</button>
+                    <button class="numpad-key" onclick="inputDigit('6')">6</button>
+                </div>
+                <div class="numpad-row">
+                    <button class="numpad-key" onclick="inputDigit('7')">7</button>
+                    <button class="numpad-key" onclick="inputDigit('8')">8</button>
+                    <button class="numpad-key" onclick="inputDigit('9')">9</button>
+                </div>
+                <div class="numpad-row">
+                    <button class="numpad-key" onclick="inputDigit('.')">.</button>
+                    <button class="numpad-key" onclick="inputDigit('0')">0</button>
+                    <button class="numpad-key action" onclick="backspace()">⌫</button>
+                </div>
+                <div class="numpad-row">
+                    <button class="numpad-key action" onclick="hideNumpad()" id="cancelBtn">取消</button>
+                    <button class="numpad-key confirm" onclick="confirmAmount()" id="confirmBtn">确认</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Note Modal -->
+        <div class="note-modal-overlay" id="noteModalOverlay" onclick="closeNoteModal()">
+            <div class="note-modal" onclick="event.stopPropagation()">
+                <div class="note-modal-header">
+                    <span class="note-modal-title" id="noteModalTitle">添加备注</span>
+                    <button class="note-modal-close" onclick="closeNoteModal()">✕</button>
+                </div>
+                <div class="note-modal-body">
+                    <textarea class="note-textarea" id="noteTextarea" placeholder="请输入备注..." maxlength="50"></textarea>
+                </div>
+                <div class="note-modal-footer">
+                    <button class="note-btn note-btn-cancel" onclick="closeNoteModal()" id="noteCancelBtn">取消</button>
+                    <button class="note-btn note-btn-confirm" onclick="saveNote()" id="noteConfirmBtn">确认</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // State
+        let amountStr = '';
+        let noteText = '';
+        let countdownTimer = null;
+        let secondsLeft = 300; // 5 minutes
+        
+        // i18n
+        const i18n = {
+            zh: {
+                pageTitle: '离线支付',
+                amountLabel: '输入金额',
+                noteHint: '添加备注',
+                generateBtn: '生成付款码',
+                qrTitle: '请让商家扫码收款',
+                qrHint: '付款码有效期5分钟',
+                expireLabel: '有效期',
+                regenerateBtn: '重新生成',
+                noteModalTitle: '添加备注',
+                cancel: '取消',
+                confirm: '确认'
+            },
+            en: {
+                pageTitle: 'Offline Pay',
+                amountLabel: 'Enter Amount',
+                noteHint: 'Add note',
+                generateBtn: 'Generate Payment QR',
+                qrTitle: 'Let merchant scan to receive',
+                qrHint: 'QR code valid for 5 minutes',
+                expireLabel: 'Expires in',
+                regenerateBtn: 'Regenerate',
+                noteModalTitle: 'Add Note',
+                cancel: 'Cancel',
+                confirm: 'Confirm'
+            },
+            th: {
+                pageTitle: 'จ่ายออฟไลน์',
+                amountLabel: 'ใส่จำนวนเงิน',
+                noteHint: 'เพิ่มหมายเหตุ',
+                generateBtn: 'สร้าง QR ชำระเงิน',
+                qrTitle: 'ให้ร้านค้าสแกนรับเงิน',
+                qrHint: 'QR ใช้ได้ 5 นาที',
+                expireLabel: 'หมดอายุใน',
+                regenerateBtn: 'สร้างใหม่',
+                noteModalTitle: 'เพิ่มหมายเหตุ',
+                cancel: 'ยกเลิก',
+                confirm: 'ยืนยัน'
+            }
+        };
+        
+        let currentLang = localStorage.getItem('boonlink_lang') || 'zh';
+        
+        function t(key) {
+            return i18n[currentLang]?.[key] || i18n['zh'][key] || key;
+        }
+        
+        function applyTranslations() {
+            document.getElementById('pageTitle').textContent = t('pageTitle');
+            document.getElementById('amountLabel').textContent = t('amountLabel');
+            if (!noteText) {
+                document.getElementById('noteDisplay').textContent = t('noteHint');
+            }
+            document.getElementById('generateBtnText').textContent = t('generateBtn');
+            document.getElementById('qrTitle').textContent = t('qrTitle');
+            document.getElementById('qrHint').textContent = t('qrHint');
+            document.getElementById('expireLabel').textContent = t('expireLabel');
+            document.getElementById('regenerateBtn').textContent = t('regenerateBtn');
+            document.getElementById('noteModalTitle').textContent = t('noteModalTitle');
+            document.getElementById('cancelBtn').textContent = t('cancel');
+            document.getElementById('confirmBtn').textContent = t('confirm');
+            document.getElementById('noteCancelBtn').textContent = t('cancel');
+            document.getElementById('noteConfirmBtn').textContent = t('confirm');
+        }
+        
+        // Navigation
+        function goBack() {
+            if (document.getElementById('qrSection').classList.contains('show')) {
+                resetToInput();
+            } else {
+                window.location.href = '/customer/index.html';
+            }
+        }
+        
+        // Numpad
+        function showNumpad() {
+            document.getElementById('numpadOverlay').classList.add('show');
+            document.getElementById('numpadContainer').classList.add('show');
+        }
+        
+        function hideNumpad() {
+            document.getElementById('numpadOverlay').classList.remove('show');
+            document.getElementById('numpadContainer').classList.remove('show');
+        }
+        
+        function inputDigit(digit) {
+            if (digit === '.' && amountStr.includes('.')) return;
+            if (amountStr === '0' && digit !== '.') amountStr = '';
+            if (amountStr.includes('.') && amountStr.split('.')[1].length >= 2) return;
+            if (amountStr.length >= 10) return;
+            
+            amountStr += digit;
+            updateAmountDisplay();
+        }
+        
+        function backspace() {
+            amountStr = amountStr.slice(0, -1);
+            updateAmountDisplay();
+        }
+        
+        function updateAmountDisplay() {
+            document.getElementById('amountInput').value = amountStr || '';
+            const amount = parseFloat(amountStr) || 0;
+            document.getElementById('generateBtn').disabled = amount <= 0;
+        }
+        
+        function confirmAmount() {
+            hideNumpad();
+        }
+        
+        // Note Modal
+        function openNoteModal() {
+            document.getElementById('noteTextarea').value = noteText;
+            document.getElementById('noteModalOverlay').classList.add('show');
+            setTimeout(() => {
+                document.getElementById('noteTextarea').focus();
+            }, 100);
+        }
+        
+        function closeNoteModal() {
+            document.getElementById('noteModalOverlay').classList.remove('show');
+        }
+        
+        function saveNote() {
+            noteText = document.getElementById('noteTextarea').value.trim();
+            const noteDisplay = document.getElementById('noteDisplay');
+            if (noteText) {
+                noteDisplay.textContent = noteText;
+                noteDisplay.classList.add('has-note');
+            } else {
+                noteDisplay.textContent = t('noteHint');
+                noteDisplay.classList.remove('has-note');
+            }
+            closeNoteModal();
+        }
+        
+        // Generate QR Code
+        function generateQR() {
+            const amount = parseFloat(amountStr) || 0;
+            if (amount <= 0) return;
+            
+            // Generate unique order ID
+            const orderId = 'BL' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).substring(2, 6).toUpperCase();
+            
+            // Get wallet address
+            const walletAddress = localStorage.getItem('connectedWallet') || '未连接';
+            
+            // Create QR data matching merchant's expected format
+            const qrData = {
+                type: 'BOONLINK_PAYMENT',
+                data: {
+                    amountTHB: amount,
+                    note: noteText || '',
+                    orderId: orderId,
+                    timestamp: Date.now(),
+                    walletAddress: walletAddress,
+                    // This is an offline payment - actual crypto transfer happens when merchant scans
+                    paymentType: 'offline'
+                }
+            };
+            
+            // Generate QR
+            const canvas = document.getElementById('qrCanvas');
+            QRCode.toCanvas(canvas, JSON.stringify(qrData), {
+                width: 200,
+                margin: 0,
+                color: {
+                    dark: '#000000',
+                    light: '#ffffff'
+                }
+            }, function(error) {
+                if (error) {
+                    console.error('QR Error:', error);
+                    return;
+                }
+                
+                // Show QR section
+                document.getElementById('inputSection').style.display = 'none';
+                document.getElementById('qrSection').classList.add('show');
+                document.getElementById('qrAmount').textContent = '฿' + amount.toLocaleString();
+                
+                // Start countdown
+                secondsLeft = 300;
+                startCountdown();
+            });
+        }
+        
+        function startCountdown() {
+            updateCountdown();
+            countdownTimer = setInterval(() => {
+                secondsLeft--;
+                if (secondsLeft <= 0) {
+                    clearInterval(countdownTimer);
+                    resetToInput();
+                    return;
+                }
+                updateCountdown();
+            }, 1000);
+        }
+        
+        function updateCountdown() {
+            const minutes = Math.floor(secondsLeft / 60);
+            const seconds = secondsLeft % 60;
+            document.getElementById('countdown').textContent = 
+                `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        }
+        
+        function resetToInput() {
+            if (countdownTimer) {
+                clearInterval(countdownTimer);
+                countdownTimer = null;
+            }
+            
+            amountStr = '';
+            noteText = '';
+            document.getElementById('amountInput').value = '';
+            document.getElementById('noteDisplay').textContent = t('noteHint');
+            document.getElementById('noteDisplay').classList.remove('has-note');
+            document.getElementById('generateBtn').disabled = true;
+            
+            document.getElementById('inputSection').style.display = 'block';
+            document.getElementById('qrSection').classList.remove('show');
+        }
+        
+        // Initialize
+        applyTranslations();
+    </script>
+</body>
+</html>

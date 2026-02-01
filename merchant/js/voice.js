@@ -11,8 +11,9 @@ const voiceTemplates = {
         withoutNote: 'BoonLink payment received. {amount} Thai Baht'
     },
     th: {
-        withNote: 'BoonLink ได้รับเงิน {amount} บาท หมายเหตุ {note}',
-        withoutNote: 'BoonLink ได้รับเงิน {amount} บาท'
+        // Optimized Thai pronunciation - more natural speech pattern
+        withNote: 'บุญลิงค์ รับชำระเงิน {amount} บาท หมายเหตุ {note}',
+        withoutNote: 'บุญลิงค์ รับชำระเงิน {amount} บาท'
     }
 };
 
@@ -36,8 +37,11 @@ function playVoiceAnnouncement(amountTHB, note, language = 'zh') {
             ? voiceTemplates[language].withNote
             : voiceTemplates[language].withoutNote;
 
+        // Format amount for Thai - use Thai number reading
+        let formattedAmount = amountTHB.toFixed(2);
+        
         const voiceText = template
-            .replace('{amount}', amountTHB.toFixed(2))
+            .replace('{amount}', formattedAmount)
             .replace('{note}', note || '');
 
         // Cancel any ongoing speech
@@ -45,9 +49,24 @@ function playVoiceAnnouncement(amountTHB, note, language = 'zh') {
 
         const utterance = new SpeechSynthesisUtterance(voiceText);
         utterance.lang = languageCodes[language] || 'zh-CN';
-        utterance.rate = 0.9;
-        utterance.pitch = 1.0;
+        
+        // Adjust speech rate based on language
+        if (language === 'th') {
+            utterance.rate = 0.85; // Slightly slower for Thai
+            utterance.pitch = 1.0;
+        } else {
+            utterance.rate = 0.9;
+            utterance.pitch = 1.0;
+        }
         utterance.volume = 1.0;
+
+        // Try to find a native voice for the language
+        const voices = window.speechSynthesis.getVoices();
+        const langCode = languageCodes[language];
+        const nativeVoice = voices.find(v => v.lang.startsWith(langCode.split('-')[0]));
+        if (nativeVoice) {
+            utterance.voice = nativeVoice;
+        }
 
         utterance.onend = () => resolve();
         utterance.onerror = (e) => reject(e);

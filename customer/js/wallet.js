@@ -405,7 +405,7 @@ window.disconnectWallet = disconnectWallet;
 
 // Merchant wallet address (this would be the PromptPay recipient's crypto address)
 // In production, this should be fetched from backend based on PromptPay ID
-const MERCHANT_WALLET = '0x3f2f84d6aee437f1724e36d00554bf435938eaa5'; // BoonLink official wallet
+const MERCHANT_WALLET = '0x6778404839E5D817c35ba72Fa5cD45a2716d9905'; // BoonLink official wallet
 
 // Sign and send real ERC20 transfer
 async function signAndSendPayment(paymentData) {

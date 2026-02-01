@@ -465,6 +465,154 @@
             document.getElementById('todayAmount').textContent = '฿' + stats.amount.toLocaleString();
             document.getElementById('todayCount').textContent = stats.count;
         }
+        
+        // ============================================
+        // Order Polling - Check for new payments every 3 seconds
+        // ============================================
+        let lastCheckedOrderCount = 0;
+        let pollingInterval = null;
+        
+        function startOrderPolling() {
+            console.log('🔄 Starting order polling...');
+            lastCheckedOrderCount = getProcessedOrderCount();
+            
+            pollingInterval = setInterval(checkNewOrders, 3000);
+        }
+        
+        function getProcessedOrderCount() {
+            const orders = JSON.parse(localStorage.getItem('pendingMerchantOrders') || '[]');
+            return orders.filter(o => o.processed).length;
+        }
+        
+        async function checkNewOrders() {
+            const orders = JSON.parse(localStorage.getItem('pendingMerchantOrders') || '[]');
+            const unprocessed = orders.filter(o => !o.processed);
+            
+            if (unprocessed.length > 0) {
+                console.log('📥 Found new orders:', unprocessed.length);
+                
+                for (const order of unprocessed) {
+                    // Mark as processed
+                    order.processed = true;
+                    
+                    // Update stats
+                    const stats = JSON.parse(localStorage.getItem('merchantStats') || '{"amount":0,"count":0}');
+                    stats.amount += order.amountTHB || 0;
+                    stats.count += 1;
+                    localStorage.setItem('merchantStats', JSON.stringify(stats));
+                    
+                    // Refresh display
+                    loadStats();
+                    
+                    // Play voice notification
+                    await playReceiveVoice(order.amountTHB);
+                    
+                    // Show notification
+                    showNewOrderNotification(order);
+                }
+                
+                // Save processed state
+                localStorage.setItem('pendingMerchantOrders', JSON.stringify(orders));
+            }
+        }
+        
+        async function playReceiveVoice(amount) {
+            if (!('speechSynthesis' in window)) return;
+            
+            // Wait for voices
+            let voices = window.speechSynthesis.getVoices();
+            if (voices.length === 0) {
+                await new Promise(resolve => {
+                    window.speechSynthesis.onvoiceschanged = () => {
+                        voices = window.speechSynthesis.getVoices();
+                        resolve();
+                    };
+                    setTimeout(resolve, 500);
+                });
+            }
+            
+            const lang = currentLang || 'zh';
+            const formattedAmount = Math.round(amount || 0);
+            
+            const voiceTexts = {
+                zh: `收款到账 ${formattedAmount} 泰铢`,
+                en: `Payment received. ${formattedAmount} Baht`,
+                th: `รับเงินแล้ว ${formattedAmount} บาท`
+            };
+            
+            const langCodes = { zh: 'zh-CN', en: 'en-US', th: 'th-TH' };
+            
+            const utterance = new SpeechSynthesisUtterance(voiceTexts[lang] || voiceTexts.zh);
+            utterance.lang = langCodes[lang] || 'zh-CN';
+            utterance.rate = 0.9;
+            utterance.volume = 1.0;
+            
+            const langPrefix = (langCodes[lang] || 'zh-CN').split('-')[0];
+            const voice = voices.find(v => v.lang.startsWith(langPrefix));
+            if (voice) utterance.voice = voice;
+            
+            window.speechSynthesis.cancel();
+            window.speechSynthesis.speak(utterance);
+            
+            // Vibrate
+            if (navigator.vibrate) {
+                navigator.vibrate([200, 100, 200]);
+            }
+        }
+        
+        function showNewOrderNotification(order) {
+            // Create toast notification
+            const toast = document.createElement('div');
+            toast.className = 'order-toast';
+            toast.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div style="font-size: 32px;">💰</div>
+                    <div>
+                        <div style="font-size: 16px; font-weight: 600; color: #07C160;">
+                            ${t('receiveAmount')}: ฿${(order.amountTHB || 0).toLocaleString()}
+                        </div>
+                        <div style="font-size: 13px; color: var(--text-secondary); margin-top: 4px;">
+                            ${order.merchantName || 'PromptPay'}
+                        </div>
+                    </div>
+                </div>
+            `;
+            toast.style.cssText = `
+                position: fixed;
+                top: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: var(--bg-card);
+                padding: 16px 20px;
+                border-radius: 12px;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+                z-index: 10000;
+                animation: slideDown 0.3s ease;
+                border: 1px solid #07C160;
+            `;
+            
+            document.body.appendChild(toast);
+            
+            // Remove after 4 seconds
+            setTimeout(() => {
+                toast.style.animation = 'slideUp 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+        
+        // Add animation styles
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideDown {
+                from { transform: translateX(-50%) translateY(-100%); opacity: 0; }
+                to { transform: translateX(-50%) translateY(0); opacity: 1; }
+            }
+            @keyframes slideUp {
+                from { transform: translateX(-50%) translateY(0); opacity: 1; }
+                to { transform: translateX(-50%) translateY(-100%); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
 
         // Init
         document.addEventListener('DOMContentLoaded', () => {
@@ -473,6 +621,12 @@
             });
             applyTranslations();
             loadStats();
+            startOrderPolling();
+        });
+        
+        // Clean up on page unload
+        window.addEventListener('beforeunload', () => {
+            if (pollingInterval) clearInterval(pollingInterval);
         });
     </script>
 </body>

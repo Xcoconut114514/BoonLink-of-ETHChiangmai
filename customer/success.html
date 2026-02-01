@@ -57,6 +57,7 @@
         const txHash = localStorage.getItem('txHash') || '';
         const tokenSymbol = localStorage.getItem('tokenSymbol') || 'USDT';
         const paymentTime = localStorage.getItem('paymentTime') || new Date().toISOString();
+        const merchantId = localStorage.getItem('merchantId') || '';
 
         // Save to transaction history
         const txRecord = {
@@ -73,6 +74,32 @@
             history.unshift(txRecord);
             localStorage.setItem('txHistory', JSON.stringify(history));
         }
+        
+        // Notify merchant via API (so merchant can receive notification)
+        async function notifyMerchant() {
+            try {
+                const orderData = {
+                    orderId: 'BL_' + Date.now(),
+                    txHash: txHash,
+                    amountTHB: parseFloat(amountTHB) || 0,
+                    cryptoAmount: cryptoAmount,
+                    token: tokenSymbol,
+                    merchantId: merchantId,
+                    merchantName: merchantName,
+                    timestamp: Date.now()
+                };
+                
+                // Store in shared storage for merchant polling
+                const pendingOrders = JSON.parse(localStorage.getItem('pendingMerchantOrders') || '[]');
+                pendingOrders.push(orderData);
+                localStorage.setItem('pendingMerchantOrders', JSON.stringify(pendingOrders));
+                
+                console.log('📤 Order saved for merchant:', orderData);
+            } catch (e) {
+                console.error('Notify merchant failed:', e);
+            }
+        }
+        notifyMerchant();
 
         // Display info
         document.getElementById('merchantName').textContent = merchantName;
@@ -89,9 +116,26 @@
             document.getElementById('discountRate').textContent = `1${tokenSymbol}=${actualRate}泰铢`;
         }
 
-        // Play success voice announcement
-        function playSuccessVoice() {
-            if (!('speechSynthesis' in window)) return;
+        // Play success voice announcement - improved for mobile
+        async function playSuccessVoice() {
+            console.log('🔊 Attempting to play success voice...');
+            
+            if (!('speechSynthesis' in window)) {
+                console.warn('Speech synthesis not supported');
+                return;
+            }
+            
+            // Wait for voices to load
+            let voices = window.speechSynthesis.getVoices();
+            if (voices.length === 0) {
+                await new Promise(resolve => {
+                    window.speechSynthesis.onvoiceschanged = () => {
+                        voices = window.speechSynthesis.getVoices();
+                        resolve();
+                    };
+                    setTimeout(resolve, 1000); // Timeout fallback
+                });
+            }
             
             const lang = localStorage.getItem('boonlink_lang') || 'zh';
             const amount = Math.round(parseFloat(amountTHB) || 0);
@@ -104,16 +148,22 @@
             
             const langCodes = { zh: 'zh-CN', en: 'en-US', th: 'th-TH' };
             
-            const utterance = new SpeechSynthesisUtterance(voiceTexts[lang] || voiceTexts.zh);
+            const text = voiceTexts[lang] || voiceTexts.zh;
+            console.log('🔊 Voice text:', text, 'Language:', lang);
+            
+            const utterance = new SpeechSynthesisUtterance(text);
             utterance.lang = langCodes[lang] || 'zh-CN';
             utterance.rate = 0.9;
             utterance.volume = 1.0;
             
             // Find appropriate voice
-            const voices = window.speechSynthesis.getVoices();
             const langPrefix = (langCodes[lang] || 'zh-CN').split('-')[0];
-            const voice = voices.find(v => v.lang.startsWith(langPrefix));
-            if (voice) utterance.voice = voice;
+            const voice = voices.find(v => v.lang.startsWith(langPrefix)) || 
+                          voices.find(v => v.lang.includes(langPrefix));
+            if (voice) {
+                utterance.voice = voice;
+                console.log('🔊 Selected voice:', voice.name);
+            }
             
             window.speechSynthesis.cancel();
             window.speechSynthesis.speak(utterance);
@@ -124,12 +174,8 @@
             }
         }
         
-        // Play voice on load
-        if (window.speechSynthesis.getVoices().length > 0) {
-            playSuccessVoice();
-        } else {
-            window.speechSynthesis.onvoiceschanged = () => playSuccessVoice();
-        }
+        // Auto-play voice on page load
+        playSuccessVoice();
 
         function showReceipt() {
             window.location.href = '/customer/receipt.html';

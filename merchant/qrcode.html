@@ -197,58 +197,60 @@
         // PromptPay QR Generator (EMVCo standard)
         // Based on Bank of Thailand PromptPay specification
         
+        function formatTLV(tag, value) {
+            const len = value.length.toString().padStart(2, '0');
+            return tag + len + value;
+        }
+        
         function generatePromptPayQR(mobileOrId, amount = null) {
             // EMVCo TLV format
             let payload = '';
             
-            // Payload Format Indicator
-            payload += '000201';
+            // Payload Format Indicator (Tag 00)
+            payload += formatTLV('00', '01');
             
-            // Point of Initiation (12 = dynamic for amount, 11 = static)
-            payload += amount ? '010212' : '010211';
+            // Point of Initiation (Tag 01): 11 = static, 12 = dynamic
+            payload += formatTLV('01', amount ? '12' : '11');
             
-            // Merchant Account Information (PromptPay)
-            const aid = '0016A000000677010111'; // PromptPay AID
-            
-            // Format phone/ID
+            // Merchant Account Information for PromptPay (Tag 29)
+            // Sub-tags: 00 = AID, 01 = Mobile, 02 = NID, 03 = E-Wallet
             let formattedId = mobileOrId.replace(/[^0-9]/g, '');
-            let idType, idValue;
+            let merchantData = '';
+            
+            // AID for PromptPay: A000000677010111
+            merchantData += formatTLV('00', 'A000000677010111');
             
             if (formattedId.length === 10) {
-                // Mobile number - add 66 prefix
+                // Mobile number - convert to international format (66xxxxxxxxx)
                 if (formattedId.startsWith('0')) {
-                    formattedId = '66' + formattedId.substring(1);
+                    formattedId = '0066' + formattedId.substring(1);
                 }
-                idType = '01'; // Mobile
-                idValue = '13' + formattedId;
+                // Tag 01 = Mobile phone
+                merchantData += formatTLV('01', formattedId);
             } else if (formattedId.length === 13) {
-                // National ID
-                idType = '02'; // NID
-                idValue = '13' + formattedId;
+                // National ID - Tag 02
+                merchantData += formatTLV('02', formattedId);
             } else {
-                throw new Error('Invalid PromptPay ID');
+                throw new Error('Invalid PromptPay ID: must be 10-digit phone or 13-digit NID');
             }
             
-            const merchantInfo = aid + idType + idValue;
-            const merchantTag = '29' + merchantInfo.length.toString().padStart(2, '0') + merchantInfo;
-            payload += merchantTag;
+            payload += formatTLV('29', merchantData);
             
-            // Transaction Currency (THB = 764)
-            payload += '5303764';
+            // Transaction Currency (Tag 53): THB = 764
+            payload += formatTLV('53', '764');
             
-            // Transaction Amount (if specified)
+            // Transaction Amount (Tag 54) - optional
             if (amount && amount > 0) {
-                const amountStr = amount.toFixed(2);
-                payload += '54' + amountStr.length.toString().padStart(2, '0') + amountStr;
+                payload += formatTLV('54', amount.toFixed(2));
             }
             
-            // Country Code (TH)
-            payload += '5802TH';
+            // Country Code (Tag 58): TH
+            payload += formatTLV('58', 'TH');
             
-            // CRC placeholder
+            // CRC (Tag 63) - placeholder then calculate
             payload += '6304';
             
-            // Calculate CRC16
+            // Calculate and append CRC16
             const crc = calculateCRC16(payload);
             payload += crc;
             

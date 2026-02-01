@@ -15,12 +15,11 @@ function parsePromptPayQR(qrData) {
             return { success: false, error: 'Invalid QR data length' };
         }
 
+        // Try EMVCo format first
         const parsed = parseEMVCo(qrData);
+        console.log('Parsed EMVCo:', parsed);
 
-        // Check if this is a valid PromptPay QR
-        // PromptPay uses AID: A000000677010111 (Tag 00 under Tag 29)
-        // Or the simpler format with just the phone/ID
-
+        // Check if this is a valid EMVCo QR (Tag 00 = Payload Format Indicator)
         if (!parsed['00'] || parsed['00'] !== '01') {
             // Not an EMVCo QR, try simple format
             return parseSimplePromptPay(qrData);
@@ -39,31 +38,36 @@ function parsePromptPayQR(qrData) {
             accountType: null
         };
 
-        // Parse merchant account information (Tag 29 or 30 for PromptPay)
-        // Tag 29: PromptPay
-        // Tag 30: Bill Payment
+        // Parse merchant account information (Tag 29, 30, 31 for PromptPay)
         for (const tag of ['29', '30', '31']) {
             if (parsed[tag]) {
                 const merchantInfo = parseEMVCo(parsed[tag]);
+                console.log(`Merchant info tag ${tag}:`, merchantInfo);
                 result.merchantAccountInfo[tag] = merchantInfo;
 
-                // AID (Application Identifier)
+                // AID (Application Identifier) - Tag 00
                 if (merchantInfo['00']) {
                     result.aid = merchantInfo['00'];
+                    // Verify PromptPay AID
+                    if (merchantInfo['00'].includes('A000000677010111')) {
+                        console.log('Valid PromptPay AID detected');
+                    }
                 }
 
-                // Account ID (phone, national ID, or e-wallet ID)
+                // Mobile phone - Tag 01
                 if (merchantInfo['01']) {
                     result.accountId = merchantInfo['01'];
-                    result.accountType = detectAccountType(merchantInfo['01']);
+                    result.accountType = 'phone';
                 }
+                // National ID - Tag 02
                 if (merchantInfo['02']) {
                     result.accountId = merchantInfo['02'];
-                    result.accountType = detectAccountType(merchantInfo['02']);
+                    result.accountType = 'nationalId';
                 }
+                // E-Wallet ID - Tag 03
                 if (merchantInfo['03']) {
                     result.accountId = merchantInfo['03'];
-                    result.accountType = 'billerId';
+                    result.accountType = 'ewallet';
                 }
             }
         }
@@ -97,11 +101,24 @@ function parsePromptPayQR(qrData) {
             }
         }
 
+        // Convert account ID format (0066xxxxxxxxx -> 0xxxxxxxxx)
+        if (result.accountId && result.accountType === 'phone') {
+            let phone = result.accountId;
+            if (phone.startsWith('0066')) {
+                phone = '0' + phone.substring(4);
+            } else if (phone.startsWith('66') && phone.length === 11) {
+                phone = '0' + phone.substring(2);
+            }
+            result.accountId = phone;
+        }
+
         // Validate we have enough info
         if (!result.accountId) {
+            console.log('No account ID found in parsed data');
             return { success: false, error: 'No account ID found' };
         }
 
+        console.log('Parse result:', result);
         return { success: true, data: result };
     } catch (error) {
         console.error('Parse error:', error);

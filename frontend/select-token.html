@@ -31,6 +31,10 @@
                     <div class="payment-summary-merchant" id="merchantName">PromptPay 商户</div>
                     <div class="payment-summary-amount" id="amountTHB">฿40.00</div>
                     <div class="payment-summary-currency">THB</div>
+                    <div class="payment-note" id="noteDisplay" style="display: none;">
+                        <span class="note-badge">📝</span>
+                        <span id="noteText"></span>
+                    </div>
                 </div>
             </div>
 
@@ -145,6 +149,23 @@
             margin-top: 4px;
         }
 
+        .payment-note {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            margin-top: 12px;
+            padding: 8px 16px;
+            background: var(--bg-input);
+            border-radius: 20px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .note-badge {
+            font-size: 12px;
+        }
+
         .section-title {
             font-size: 13px;
             color: var(--text-secondary);
@@ -212,12 +233,19 @@
         // Get amount from localStorage
         const amountTHB = parseFloat(localStorage.getItem('amountTHB')) || 40;
         const merchantName = localStorage.getItem('merchantName') || 'PromptPay 商户';
+        const paymentNote = localStorage.getItem('paymentNote') || '';
 
         let selectedToken = 'USDT';
 
         // Update display
         document.getElementById('amountTHB').textContent = `฿${amountTHB.toFixed(2)}`;
         document.getElementById('merchantName').textContent = merchantName;
+
+        // Show note if exists
+        if (paymentNote) {
+            document.getElementById('noteDisplay').style.display = 'flex';
+            document.getElementById('noteText').textContent = paymentNote;
+        }
 
         // Calculate and display token amounts
         function updateTokenAmounts() {

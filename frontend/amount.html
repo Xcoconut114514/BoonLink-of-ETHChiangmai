@@ -6,6 +6,181 @@
     <meta name="theme-color" content="#EDEDED">
     <title>输入金额 - BoonLink</title>
     <link rel="stylesheet" href="css/style.css">
+    <style>
+        /* Note Input Card */
+        .note-input-card {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 0 16px 16px;
+            padding: 14px 16px;
+            background: var(--bg-card);
+            border-radius: 12px;
+            box-shadow: var(--shadow-card);
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .note-input-card:active {
+            background: var(--bg-input);
+        }
+
+        .note-icon {
+            font-size: 20px;
+        }
+
+        .note-content {
+            flex: 1;
+        }
+
+        .note-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 2px;
+        }
+
+        .note-value {
+            font-size: 15px;
+            color: var(--text-tertiary);
+        }
+
+        .note-value.has-note {
+            color: var(--text-primary);
+        }
+
+        .note-arrow {
+            font-size: 20px;
+            color: var(--text-tertiary);
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: flex-end;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal-content {
+            width: 100%;
+            max-width: 428px;
+            background: var(--bg-card);
+            border-radius: 20px 20px 0 0;
+            animation: slideUp 0.3s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .modal-title {
+            font-size: 17px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 18px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 4px;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .note-textarea {
+            width: 100%;
+            height: 100px;
+            padding: 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            font-size: 16px;
+            font-family: inherit;
+            resize: none;
+            background: var(--bg-input);
+            color: var(--text-primary);
+        }
+
+        .note-textarea:focus {
+            outline: none;
+            border-color: var(--accent-green);
+        }
+
+        .note-char-count {
+            text-align: right;
+            font-size: 12px;
+            color: var(--text-tertiary);
+            margin-top: 8px;
+        }
+
+        .note-quick-tags {
+            margin-top: 16px;
+        }
+
+        .quick-tag-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+        }
+
+        .quick-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .quick-tag {
+            padding: 8px 14px;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            font-size: 14px;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .quick-tag:active {
+            background: var(--accent-green);
+            border-color: var(--accent-green);
+            color: white;
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 12px;
+            padding: 16px 20px;
+            padding-bottom: calc(16px + env(safe-area-inset-bottom, 0));
+            border-top: 1px solid var(--border-color);
+        }
+
+        .modal-footer .btn {
+            flex: 1;
+        }
+    </style>
 </head>
 <body>
     <div class="app-container">
@@ -40,10 +215,54 @@
             </div>
         </div>
 
+        <!-- Note/Remark Input -->
+        <div class="note-input-card" onclick="openNoteModal()">
+            <div class="note-icon">📝</div>
+            <div class="note-content">
+                <div class="note-label">添加备注</div>
+                <div class="note-value" id="notePreview">点击添加商品描述（可选）</div>
+            </div>
+            <div class="note-arrow">›</div>
+        </div>
+
         <!-- Logo Section -->
         <div class="amount-logo-section">
             <img src="assets/logo.png" alt="BoonLink" class="amount-logo-image">
             <div class="amount-logo-text">BoonLink</div>
+        </div>
+
+        <!-- Note Modal -->
+        <div class="modal-overlay" id="noteModal" onclick="closeNoteModal(event)">
+            <div class="modal-content" onclick="event.stopPropagation()">
+                <div class="modal-header">
+                    <div class="modal-title">添加备注</div>
+                    <button class="modal-close" onclick="closeNoteModal()">✕</button>
+                </div>
+                <div class="modal-body">
+                    <textarea
+                        id="noteInput"
+                        class="note-textarea"
+                        placeholder="例如：一份猪肉打抛饭、两杯泰式奶茶..."
+                        maxlength="100"
+                    ></textarea>
+                    <div class="note-char-count"><span id="charCount">0</span>/100</div>
+                    <div class="note-quick-tags">
+                        <div class="quick-tag-label">快捷标签</div>
+                        <div class="quick-tags">
+                            <button class="quick-tag" onclick="addQuickTag('打抛饭')">打抛饭</button>
+                            <button class="quick-tag" onclick="addQuickTag('泰式奶茶')">泰式奶茶</button>
+                            <button class="quick-tag" onclick="addQuickTag('芒果糯米饭')">芒果糯米饭</button>
+                            <button class="quick-tag" onclick="addQuickTag('冬阴功汤')">冬阴功汤</button>
+                            <button class="quick-tag" onclick="addQuickTag('青木瓜沙拉')">青木瓜沙拉</button>
+                            <button class="quick-tag" onclick="addQuickTag('椰子水')">椰子水</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" onclick="clearNote()">清除</button>
+                    <button class="btn btn-primary" onclick="saveNote()">确定</button>
+                </div>
+            </div>
         </div>
 
         <!-- Spacer to push numpad to bottom -->
@@ -88,6 +307,7 @@
         const merchantName = localStorage.getItem('merchantName') || 'PromptPay 商户';
         let currentAmount = localStorage.getItem('amountTHB') || '0';
         const amountFromQR = localStorage.getItem('amountFromQR') === 'true';
+        let paymentNote = localStorage.getItem('paymentNote') || '';
 
         // Set merchant name
         document.getElementById('merchantName').textContent = merchantName;
@@ -98,6 +318,9 @@
             document.querySelector('.amount-hint').innerHTML =
                 '<span style="color: var(--accent-green);">金额已由商户设定</span>';
         }
+
+        // Initialize note preview
+        updateNotePreview();
 
         // Update display
         function updateDisplay() {
@@ -200,6 +423,7 @@
             // Save data
             localStorage.setItem('merchantName', merchantName);
             localStorage.setItem('amountTHB', currentAmount);
+            localStorage.setItem('paymentNote', paymentNote);
 
             // Navigate to token selection
             window.location.href = 'select-token.html';
@@ -217,11 +441,80 @@
             window.location.href = 'scan.html';
         }
 
+        // Note Modal Functions
+        function openNoteModal() {
+            if (navigator.vibrate) {
+                navigator.vibrate(5);
+            }
+            document.getElementById('noteModal').classList.add('show');
+            document.getElementById('noteInput').value = paymentNote;
+            updateCharCount();
+            document.getElementById('noteInput').focus();
+        }
+
+        function closeNoteModal(event) {
+            if (event && event.target !== document.getElementById('noteModal')) return;
+            document.getElementById('noteModal').classList.remove('show');
+        }
+
+        function updateCharCount() {
+            const count = document.getElementById('noteInput').value.length;
+            document.getElementById('charCount').textContent = count;
+        }
+
+        function addQuickTag(tag) {
+            if (navigator.vibrate) {
+                navigator.vibrate(5);
+            }
+            const input = document.getElementById('noteInput');
+            const currentValue = input.value;
+            if (currentValue) {
+                input.value = currentValue + '、' + tag;
+            } else {
+                input.value = tag;
+            }
+            updateCharCount();
+        }
+
+        function clearNote() {
+            if (navigator.vibrate) {
+                navigator.vibrate(5);
+            }
+            document.getElementById('noteInput').value = '';
+            updateCharCount();
+        }
+
+        function saveNote() {
+            if (navigator.vibrate) {
+                navigator.vibrate(10);
+            }
+            paymentNote = document.getElementById('noteInput').value.trim();
+            localStorage.setItem('paymentNote', paymentNote);
+            updateNotePreview();
+            closeNoteModal();
+        }
+
+        function updateNotePreview() {
+            const preview = document.getElementById('notePreview');
+            if (paymentNote) {
+                preview.textContent = paymentNote;
+                preview.classList.add('has-note');
+            } else {
+                preview.textContent = '点击添加商品描述（可选）';
+                preview.classList.remove('has-note');
+            }
+        }
+
+        // Event listener for textarea
+        document.getElementById('noteInput').addEventListener('input', updateCharCount);
+
         // Initialize display
         updateDisplay();
 
         // Handle keyboard input (for desktop testing)
         document.addEventListener('keydown', (e) => {
+            // Don't handle keyboard when modal is open
+            if (document.getElementById('noteModal').classList.contains('show')) return;
             if (amountFromQR) return;
 
             if (e.key >= '0' && e.key <= '9') {

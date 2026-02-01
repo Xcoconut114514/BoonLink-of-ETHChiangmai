@@ -65,6 +65,10 @@
                         <span class="detail-label">时间</span>
                         <span class="detail-value" id="timestamp">2025-01-30 14:30:25</span>
                     </div>
+                    <div class="detail-item" id="noteItem" style="display: none;">
+                        <span class="detail-label">备注</span>
+                        <span class="detail-value" id="paymentNote" style="color: var(--text-primary);"></span>
+                    </div>
                     <div class="detail-item" style="border: none;">
                         <span class="detail-label">订单号</span>
                         <span class="detail-value" id="orderId">BL20250130001</span>
@@ -151,10 +155,17 @@
         const selectedToken = localStorage.getItem('selectedToken') || 'USDT';
         const amountCrypto = parseFloat(localStorage.getItem('amountCrypto')) || 1.13;
         const exchangeRate = parseFloat(localStorage.getItem('exchangeRate')) || 35.40;
+        const paymentNote = localStorage.getItem('paymentNote') || '';
 
         // Update display
         document.getElementById('merchantName').textContent = merchantName;
         document.getElementById('amountTHB').textContent = `฿${amountTHB.toFixed(2)} THB`;
+
+        // Show note if exists
+        if (paymentNote) {
+            document.getElementById('noteItem').style.display = 'flex';
+            document.getElementById('paymentNote').textContent = paymentNote;
+        }
 
         // Format crypto amount based on token
         const cryptoFormatted = selectedToken === 'ETH'

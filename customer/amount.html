@@ -6,6 +6,189 @@
     <meta name="theme-color" content="#191919">
     <title>付款 - BoonLink</title>
     <link rel="stylesheet" href="/shared/css/wechat-dark.css">
+    <style>
+        /* Amount card clickable */
+        .wc-amount-card {
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .wc-amount-card:active {
+            background: var(--bg-card);
+        }
+        
+        /* Numpad overlay */
+        .wc-numpad-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.4);
+            z-index: 500;
+            display: none;
+        }
+        .wc-numpad-overlay.show {
+            display: block;
+        }
+        
+        /* Numpad container - slides up */
+        .wc-numpad {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            max-width: 428px;
+            margin: 0 auto;
+            transform: translateY(100%);
+            transition: transform 0.25s ease-out;
+            z-index: 501;
+        }
+        .wc-numpad.show {
+            transform: translateY(0);
+        }
+        
+        /* Note card */
+        .wc-note-card {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 12px 16px;
+            padding: 14px 16px;
+            background: var(--bg-secondary);
+            border-radius: 10px;
+            cursor: pointer;
+        }
+        .wc-note-icon { font-size: 18px; }
+        .wc-note-text {
+            flex: 1;
+            font-size: 14px;
+            color: var(--text-secondary);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .wc-note-text.has-note { color: var(--text-primary); }
+        .wc-note-arrow { font-size: 20px; color: var(--text-tertiary); }
+        
+        /* Note Modal - bottom sheet */
+        .note-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            display: none;
+        }
+        .note-modal-overlay.show {
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+        }
+        .note-modal {
+            width: 100%;
+            max-width: 428px;
+            background: var(--bg-secondary);
+            border-radius: 16px 16px 0 0;
+            padding-bottom: env(safe-area-inset-bottom, 0);
+        }
+        .note-modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .note-modal-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        .note-modal-close {
+            background: none;
+            border: none;
+            font-size: 18px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 4px 8px;
+        }
+        .note-modal-body {
+            padding: 16px;
+        }
+        .note-textarea {
+            width: 100%;
+            height: 90px;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            background: var(--bg-input);
+            color: var(--text-primary);
+            font-size: 15px;
+            resize: none;
+            font-family: inherit;
+            box-sizing: border-box;
+        }
+        .note-textarea:focus {
+            outline: none;
+            border-color: var(--accent-green);
+        }
+        .note-textarea::placeholder {
+            color: var(--text-tertiary);
+        }
+        .note-char-count {
+            text-align: right;
+            font-size: 12px;
+            color: var(--text-tertiary);
+            margin-top: 8px;
+        }
+        .note-quick-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin: 16px 0 10px;
+        }
+        .note-quick-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .note-quick-tag {
+            padding: 8px 14px;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: 18px;
+            font-size: 13px;
+            color: var(--text-primary);
+            cursor: pointer;
+        }
+        .note-quick-tag:active {
+            background: var(--accent-green);
+            border-color: var(--accent-green);
+            color: white;
+        }
+        .note-modal-footer {
+            display: flex;
+            gap: 12px;
+            padding: 12px 16px;
+            border-top: 1px solid var(--border-color);
+        }
+        .note-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .note-btn-cancel {
+            background: var(--bg-card);
+            color: var(--text-primary);
+        }
+        .note-btn-confirm {
+            background: var(--accent-green);
+            color: white;
+        }
+    </style>
 </head>
 <body>
     <div class="app-container">
@@ -22,8 +205,8 @@
             <div class="wc-merchant-name" id="merchantName">PromptPay 商户</div>
         </div>
 
-        <!-- Amount Card -->
-        <div class="wc-amount-card">
+        <!-- Amount Card - Click to show numpad -->
+        <div class="wc-amount-card" onclick="showNumpad()">
             <div class="wc-amount-label">付款金额</div>
             <div class="wc-amount-row">
                 <span class="wc-amount-currency">THB</span>
@@ -56,33 +239,59 @@
                 BoonLink 加密支付
             </div>
         </div>
+    </div>
 
-        <!-- Numpad -->
-        <div class="wc-numpad">
-            <div class="wc-numpad-grid">
-                <!-- Row 1 -->
-                <button class="wc-key" onclick="addDigit('1')">1</button>
-                <button class="wc-key" onclick="addDigit('2')">2</button>
-                <button class="wc-key" onclick="addDigit('3')">3</button>
-                <button class="wc-key wc-key-delete" onclick="deleteDigit()">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M21 4H8l-7 8 7 8h13a2 2 0 002-2V6a2 2 0 00-2-2z"/>
-                        <line x1="18" y1="9" x2="12" y2="15"/>
-                        <line x1="12" y1="9" x2="18" y2="15"/>
-                    </svg>
-                </button>
-                <!-- Row 2 -->
-                <button class="wc-key" onclick="addDigit('4')">4</button>
-                <button class="wc-key" onclick="addDigit('5')">5</button>
-                <button class="wc-key" onclick="addDigit('6')">6</button>
-                <button class="wc-key wc-key-pay" id="payButton" onclick="showConfirmModal()" disabled>付款</button>
-                <!-- Row 3 -->
-                <button class="wc-key" onclick="addDigit('7')">7</button>
-                <button class="wc-key" onclick="addDigit('8')">8</button>
-                <button class="wc-key" onclick="addDigit('9')">9</button>
-                <!-- Row 4 -->
-                <button class="wc-key wc-key-zero" onclick="addDigit('0')">0</button>
-                <button class="wc-key" onclick="addDigit('.')">.</button>
+    <!-- Numpad Overlay -->
+    <div class="wc-numpad-overlay" id="numpadOverlay" onclick="hideNumpad()"></div>
+    
+    <!-- Numpad -->
+    <div class="wc-numpad" id="numpad">
+        <div class="wc-numpad-grid">
+            <button class="wc-key" onclick="addDigit('1')">1</button>
+            <button class="wc-key" onclick="addDigit('2')">2</button>
+            <button class="wc-key" onclick="addDigit('3')">3</button>
+            <button class="wc-key wc-key-delete" onclick="deleteDigit()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 4H8l-7 8 7 8h13a2 2 0 002-2V6a2 2 0 00-2-2z"/>
+                    <line x1="18" y1="9" x2="12" y2="15"/>
+                    <line x1="12" y1="9" x2="18" y2="15"/>
+                </svg>
+            </button>
+            <button class="wc-key" onclick="addDigit('4')">4</button>
+            <button class="wc-key" onclick="addDigit('5')">5</button>
+            <button class="wc-key" onclick="addDigit('6')">6</button>
+            <button class="wc-key wc-key-pay" id="payButton" onclick="showConfirmModal()" disabled>付款</button>
+            <button class="wc-key" onclick="addDigit('7')">7</button>
+            <button class="wc-key" onclick="addDigit('8')">8</button>
+            <button class="wc-key" onclick="addDigit('9')">9</button>
+            <button class="wc-key wc-key-zero" onclick="addDigit('0')">0</button>
+            <button class="wc-key" onclick="addDigit('.')">.</button>
+        </div>
+    </div>
+
+    <!-- Note Modal -->
+    <div class="note-modal-overlay" id="noteModal" onclick="closeNoteModal(event)">
+        <div class="note-modal" onclick="event.stopPropagation()">
+            <div class="note-modal-header">
+                <div class="note-modal-title">添加备注</div>
+                <button class="note-modal-close" onclick="closeNoteModal()">✕</button>
+            </div>
+            <div class="note-modal-body">
+                <textarea id="noteInput" class="note-textarea" placeholder="例如：一份猪肉打抛饭、两杯泰式奶茶..." maxlength="100" oninput="updateCharCount()"></textarea>
+                <div class="note-char-count"><span id="charCount">0</span>/100</div>
+                <div class="note-quick-label">快捷标签</div>
+                <div class="note-quick-tags">
+                    <span class="note-quick-tag" onclick="addTag('打抛饭')">打抛饭</span>
+                    <span class="note-quick-tag" onclick="addTag('泰式奶茶')">泰式奶茶</span>
+                    <span class="note-quick-tag" onclick="addTag('芒果糯米饭')">芒果糯米饭</span>
+                    <span class="note-quick-tag" onclick="addTag('冬阴功汤')">冬阴功汤</span>
+                    <span class="note-quick-tag" onclick="addTag('青木瓜沙拉')">青木瓜沙拉</span>
+                    <span class="note-quick-tag" onclick="addTag('椰子水')">椰子水</span>
+                </div>
+            </div>
+            <div class="note-modal-footer">
+                <button class="note-btn note-btn-cancel" onclick="clearNote()">清除</button>
+                <button class="note-btn note-btn-confirm" onclick="saveNote()">确定</button>
             </div>
         </div>
     </div>
@@ -108,307 +317,111 @@
         </div>
     </div>
 
-    <!-- Note Modal -->
-    <div class="wc-modal-overlay" id="noteModal">
-        <div class="wc-modal wc-note-modal">
-            <div class="wc-modal-header">
-                <div class="wc-modal-title">添加备注</div>
-                <button class="wc-modal-close" onclick="closeNoteModal()">✕</button>
-            </div>
-            <div class="wc-modal-body">
-                <textarea id="noteInput" class="wc-note-textarea" placeholder="例如：一份打抛饭、两杯奶茶..." maxlength="100" oninput="document.getElementById('charCount').textContent=this.value.length"></textarea>
-                <div class="wc-note-count"><span id="charCount">0</span>/100</div>
-                <div class="wc-quick-tags">
-                    <span class="wc-quick-tag" onclick="addTag('打抛饭')">打抛饭</span>
-                    <span class="wc-quick-tag" onclick="addTag('泰式奶茶')">泰式奶茶</span>
-                    <span class="wc-quick-tag" onclick="addTag('芒果糯米饭')">芒果糯米饭</span>
-                    <span class="wc-quick-tag" onclick="addTag('冬阴功')">冬阴功</span>
-                    <span class="wc-quick-tag" onclick="addTag('椰子水')">椰子水</span>
-                </div>
-            </div>
-            <div class="wc-modal-footer">
-                <button class="wc-modal-btn wc-modal-btn-cancel" onclick="clearNote()">清除</button>
-                <button class="wc-modal-btn wc-modal-btn-confirm" onclick="saveNote()">确定</button>
-            </div>
-        </div>
-    </div>
-
-    <style>
-        .wc-note-card {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin: 12px 16px;
-            padding: 12px 14px;
-            background: var(--bg-secondary);
-            border-radius: 10px;
-            cursor: pointer;
-        }
-        .wc-note-icon { font-size: 16px; }
-        .wc-note-text {
-            flex: 1;
-            font-size: 14px;
-            color: var(--text-secondary);
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-        .wc-note-text.has-note { color: var(--text-primary); }
-        .wc-note-arrow { font-size: 18px; color: var(--text-tertiary); }
-        
-        /* Note Modal */
-        .wc-note-modal { max-width: 340px; }
-        .wc-modal-close {
-            background: none;
-            border: none;
-            color: var(--text-secondary);
-            font-size: 16px;
-            cursor: pointer;
-            padding: 4px;
-        }
-        .wc-note-textarea {
-            width: 100%;
-            height: 80px;
-            padding: 12px;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            background: var(--bg-input);
-            color: var(--text-primary);
-            font-size: 14px;
-            resize: none;
-            font-family: inherit;
-            box-sizing: border-box;
-        }
-        .wc-note-textarea:focus {
-            outline: none;
-            border-color: var(--accent-green);
-        }
-        .wc-note-count {
-            text-align: right;
-            font-size: 11px;
-            color: var(--text-tertiary);
-            margin-top: 6px;
-        }
-        .wc-quick-tags {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-top: 12px;
-        }
-        .wc-quick-tag {
-            padding: 6px 12px;
-            background: var(--bg-input);
-            border-radius: 14px;
-            font-size: 12px;
-            color: var(--text-secondary);
-            cursor: pointer;
-        }
-        .wc-quick-tag:active {
-            background: var(--accent-green);
-            color: white;
-        }
-    </style>
-
     <script src="/customer/js/wallet.js"></script>
     <script>
         // State
         let currentAmount = '0';
-        let selectedToken = 'USDT';
         let paymentNote = localStorage.getItem('paymentNote') || '';
-        const RATE = 35.40; // 1 USDT = 35.40 THB
+        const RATE = 35.40;
 
-        // Get merchant info from localStorage
+        // Get merchant info
         const merchantName = localStorage.getItem('merchantName') || 'PromptPay 商户';
         const merchantId = localStorage.getItem('merchantId') || '';
         const amountFromQR = localStorage.getItem('amountFromQR') === 'true';
         const qrAmount = localStorage.getItem('amountTHB') || '0';
 
-        // Initialize
+        // Init
         document.getElementById('merchantName').textContent = merchantName;
         updateNotePreview();
 
-        // If amount was preset from QR code
         if (amountFromQR && qrAmount !== '0') {
             currentAmount = qrAmount;
             document.getElementById('cursor').style.display = 'none';
+            updateDisplay();
         }
 
-        updateDisplay();
+        // Numpad functions
+        function showNumpad() {
+            if (amountFromQR) return;
+            document.getElementById('numpadOverlay').classList.add('show');
+            document.getElementById('numpad').classList.add('show');
+        }
+
+        function hideNumpad() {
+            document.getElementById('numpadOverlay').classList.remove('show');
+            document.getElementById('numpad').classList.remove('show');
+        }
 
         function updateDisplay() {
-            const display = document.getElementById('amountDisplay');
-            display.textContent = currentAmount === '0' ? '0' : formatAmount(currentAmount);
-
-            // Calculate crypto amount
+            document.getElementById('amountDisplay').textContent = currentAmount === '0' ? '0' : formatAmount(currentAmount);
             const thbAmount = parseFloat(currentAmount) || 0;
             const cryptoAmount = (thbAmount / RATE).toFixed(2);
             document.getElementById('cryptoHint').textContent = `${cryptoAmount} USDT`;
-
-            // Enable/disable pay button
-            const payBtn = document.getElementById('payButton');
-            payBtn.disabled = thbAmount <= 0;
+            document.getElementById('payButton').disabled = thbAmount <= 0;
         }
 
         function formatAmount(amount) {
             if (!amount || amount === '0') return '0';
             const parts = amount.split('.');
-            const integerPart = parts[0] || '0';
-            const decimalPart = parts[1];
-            const formattedInteger = parseInt(integerPart).toLocaleString();
-            if (decimalPart !== undefined) {
-                return `${formattedInteger}.${decimalPart}`;
-            }
-            return formattedInteger;
+            const integerPart = parseInt(parts[0] || '0').toLocaleString();
+            return parts[1] !== undefined ? `${integerPart}.${parts[1]}` : integerPart;
         }
 
         function addDigit(digit) {
-            if (amountFromQR) return; // Can't edit if from QR
-
-            if (digit === '.') {
-                if (currentAmount.includes('.')) return;
-                if (currentAmount === '0') currentAmount = '0';
-            }
-
+            if (amountFromQR) return;
+            if (digit === '.' && currentAmount.includes('.')) return;
             if (currentAmount === '0' && digit !== '.') {
                 currentAmount = digit;
             } else {
-                // Limit decimal places to 2
-                if (currentAmount.includes('.')) {
-                    const decimalPart = currentAmount.split('.')[1];
-                    if (decimalPart && decimalPart.length >= 2) return;
-                }
-                // Limit total length
+                if (currentAmount.includes('.') && currentAmount.split('.')[1]?.length >= 2) return;
                 if (currentAmount.replace('.', '').length >= 10) return;
                 currentAmount += digit;
             }
-
             updateDisplay();
         }
 
         function deleteDigit() {
             if (amountFromQR) return;
-
-            if (currentAmount.length <= 1) {
-                currentAmount = '0';
-            } else {
-                currentAmount = currentAmount.slice(0, -1);
-            }
+            currentAmount = currentAmount.length <= 1 ? '0' : currentAmount.slice(0, -1);
             updateDisplay();
-        }
-
-        function showConfirmModal() {
-            const thbAmount = parseFloat(currentAmount) || 0;
-            const cryptoAmount = (thbAmount / RATE).toFixed(2);
-
-            document.getElementById('modalAmount').textContent = `${cryptoAmount} USDT`;
-            document.getElementById('modalMerchant').textContent = `付款给 ${merchantName}`;
-            document.getElementById('confirmModal').classList.add('show');
-        }
-
-        function closeConfirmModal() {
-            document.getElementById('confirmModal').classList.remove('show');
-            // Reset modal to default state
-            document.getElementById('modalBody').innerHTML = `
-                <div class="wc-modal-amount" id="modalAmount">${document.getElementById('modalAmount')?.textContent || '0 USDT'}</div>
-                <div class="wc-modal-merchant" id="modalMerchant">付款给 ${merchantName}</div>
-                <div class="wc-modal-info">
-                    请在钱包中确认交易签名<br>
-                    网络：BSC (BNB Smart Chain)
-                </div>
-            `;
-            document.getElementById('modalFooter').style.display = 'flex';
-            document.getElementById('modalFooter').innerHTML = `
-                <button class="wc-modal-btn wc-modal-btn-cancel" onclick="closeConfirmModal()">取消</button>
-                <button class="wc-modal-btn wc-modal-btn-confirm" onclick="confirmPayment()">确认</button>
-            `;
-        }
-
-        async function confirmPayment() {
-            const modalBody = document.getElementById('modalBody');
-            const modalFooter = document.getElementById('modalFooter');
-
-            // Show loading
-            modalBody.innerHTML = `
-                <div class="wc-loading">
-                    <div class="wc-spinner"></div>
-                    <div class="wc-loading-text">正在连接钱包...</div>
-                </div>
-            `;
-            modalFooter.style.display = 'none';
-
-            try {
-                // Connect wallet
-                await connectWallet();
-
-                modalBody.querySelector('.wc-loading-text').textContent = '请在钱包中确认签名...';
-
-                // Prepare payment data
-                const thbAmount = parseFloat(currentAmount) || 0;
-                const cryptoAmount = (thbAmount / RATE).toFixed(6);
-
-                // Sign and send transaction
-                const txHash = await signAndSendPayment({
-                    amount: cryptoAmount,
-                    token: 'USDT',
-                    merchantId: merchantId,
-                    merchantName: merchantName,
-                    thbAmount: thbAmount
-                });
-
-                // Store transaction info
-                localStorage.setItem('txHash', txHash);
-                localStorage.setItem('cryptoAmount', cryptoAmount);
-                localStorage.setItem('tokenSymbol', 'USDT');
-                localStorage.setItem('amountTHB', currentAmount);
-                localStorage.setItem('paymentTime', new Date().toISOString());
-
-                // Go to success page
-                window.location.href = '/customer/success.html';
-
-            } catch (error) {
-                console.error('Payment error:', error);
-                modalBody.innerHTML = `
-                    <div style="padding: 20px; text-align: center;">
-                        <div style="font-size: 40px; margin-bottom: 12px;">❌</div>
-                        <div style="font-size: 15px; color: var(--text-primary); margin-bottom: 8px;">支付失败</div>
-                        <div style="font-size: 13px; color: var(--text-secondary);">${error.message || '请重试'}</div>
-                    </div>
-                `;
-                modalFooter.innerHTML = `
-                    <button class="wc-modal-btn wc-modal-btn-confirm" onclick="closeConfirmModal()" style="border: none;">关闭</button>
-                `;
-                modalFooter.style.display = 'flex';
-            }
         }
 
         // Note functions
         function openNoteModal() {
             document.getElementById('noteModal').classList.add('show');
-            document.getElementById('noteInput').value = paymentNote;
+            const input = document.getElementById('noteInput');
+            input.value = paymentNote;
             document.getElementById('charCount').textContent = paymentNote.length;
+            // Focus to show system keyboard
+            setTimeout(() => input.focus(), 100);
         }
 
-        function closeNoteModal() {
+        function closeNoteModal(event) {
+            if (event && event.target.id !== 'noteModal') return;
             document.getElementById('noteModal').classList.remove('show');
+        }
+
+        function updateCharCount() {
+            document.getElementById('charCount').textContent = document.getElementById('noteInput').value.length;
         }
 
         function addTag(tag) {
             const input = document.getElementById('noteInput');
-            const current = input.value;
-            input.value = current ? current + '、' + tag : tag;
-            document.getElementById('charCount').textContent = input.value.length;
+            input.value = input.value ? input.value + '、' + tag : tag;
+            updateCharCount();
+            input.focus();
         }
 
         function clearNote() {
             document.getElementById('noteInput').value = '';
-            document.getElementById('charCount').textContent = '0';
+            updateCharCount();
         }
 
         function saveNote() {
             paymentNote = document.getElementById('noteInput').value.trim();
             localStorage.setItem('paymentNote', paymentNote);
             updateNotePreview();
-            closeNoteModal();
+            document.getElementById('noteModal').classList.remove('show');
         }
 
         function updateNotePreview() {
@@ -419,6 +432,79 @@
             } else {
                 preview.textContent = '添加备注（可选）';
                 preview.classList.remove('has-note');
+            }
+        }
+
+        // Payment functions
+        function showConfirmModal() {
+            hideNumpad();
+            const thbAmount = parseFloat(currentAmount) || 0;
+            const cryptoAmount = (thbAmount / RATE).toFixed(2);
+            document.getElementById('modalAmount').textContent = `${cryptoAmount} USDT`;
+            document.getElementById('modalMerchant').textContent = `付款给 ${merchantName}`;
+            document.getElementById('confirmModal').classList.add('show');
+        }
+
+        function closeConfirmModal() {
+            document.getElementById('confirmModal').classList.remove('show');
+            resetConfirmModal();
+        }
+
+        function resetConfirmModal() {
+            const thbAmount = parseFloat(currentAmount) || 0;
+            const cryptoAmount = (thbAmount / RATE).toFixed(2);
+            document.getElementById('modalBody').innerHTML = `
+                <div class="wc-modal-amount" id="modalAmount">${cryptoAmount} USDT</div>
+                <div class="wc-modal-merchant" id="modalMerchant">付款给 ${merchantName}</div>
+                <div class="wc-modal-info">请在钱包中确认交易签名<br>网络：BSC (BNB Smart Chain)</div>
+            `;
+            document.getElementById('modalFooter').innerHTML = `
+                <button class="wc-modal-btn wc-modal-btn-cancel" onclick="closeConfirmModal()">取消</button>
+                <button class="wc-modal-btn wc-modal-btn-confirm" onclick="confirmPayment()">确认</button>
+            `;
+            document.getElementById('modalFooter').style.display = 'flex';
+        }
+
+        async function confirmPayment() {
+            const modalBody = document.getElementById('modalBody');
+            const modalFooter = document.getElementById('modalFooter');
+
+            modalBody.innerHTML = `<div class="wc-loading"><div class="wc-spinner"></div><div class="wc-loading-text">正在连接钱包...</div></div>`;
+            modalFooter.style.display = 'none';
+
+            try {
+                await connectWallet();
+                modalBody.querySelector('.wc-loading-text').textContent = '请在钱包中确认签名...';
+
+                const thbAmount = parseFloat(currentAmount) || 0;
+                const cryptoAmount = (thbAmount / RATE).toFixed(6);
+
+                const txHash = await signAndSendPayment({
+                    amount: cryptoAmount,
+                    token: 'USDT',
+                    merchantId: merchantId,
+                    merchantName: merchantName,
+                    thbAmount: thbAmount
+                });
+
+                localStorage.setItem('txHash', txHash);
+                localStorage.setItem('cryptoAmount', cryptoAmount);
+                localStorage.setItem('tokenSymbol', 'USDT');
+                localStorage.setItem('amountTHB', currentAmount);
+                localStorage.setItem('paymentTime', new Date().toISOString());
+
+                window.location.href = '/customer/success.html';
+            } catch (error) {
+                console.error('Payment error:', error);
+                modalBody.innerHTML = `
+                    <div style="padding: 20px; text-align: center;">
+                        <div style="font-size: 40px; margin-bottom: 12px;">❌</div>
+                        <div style="font-size: 15px; color: var(--text-primary); margin-bottom: 8px;">支付失败</div>
+                        <div style="font-size: 13px; color: var(--text-secondary);">${error.message || '请重试'}</div>
+                    </div>
+                `;
+                modalFooter.innerHTML = `<button class="wc-modal-btn wc-modal-btn-confirm" onclick="closeConfirmModal()" style="border:none;">关闭</button>`;
+                modalFooter.style.display = 'flex';
             }
         }
 

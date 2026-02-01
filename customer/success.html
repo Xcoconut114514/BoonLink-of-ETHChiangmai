@@ -89,6 +89,48 @@
             document.getElementById('discountRate').textContent = `1${tokenSymbol}=${actualRate}泰铢`;
         }
 
+        // Play success voice announcement
+        function playSuccessVoice() {
+            if (!('speechSynthesis' in window)) return;
+            
+            const lang = localStorage.getItem('boonlink_lang') || 'zh';
+            const amount = Math.round(parseFloat(amountTHB) || 0);
+            
+            const voiceTexts = {
+                zh: `支付成功 ${amount} 泰铢`,
+                en: `Payment successful. ${amount} Baht`,
+                th: `ชำระเงินสำเร็จ ${amount} บาท`
+            };
+            
+            const langCodes = { zh: 'zh-CN', en: 'en-US', th: 'th-TH' };
+            
+            const utterance = new SpeechSynthesisUtterance(voiceTexts[lang] || voiceTexts.zh);
+            utterance.lang = langCodes[lang] || 'zh-CN';
+            utterance.rate = 0.9;
+            utterance.volume = 1.0;
+            
+            // Find appropriate voice
+            const voices = window.speechSynthesis.getVoices();
+            const langPrefix = (langCodes[lang] || 'zh-CN').split('-')[0];
+            const voice = voices.find(v => v.lang.startsWith(langPrefix));
+            if (voice) utterance.voice = voice;
+            
+            window.speechSynthesis.cancel();
+            window.speechSynthesis.speak(utterance);
+            
+            // Haptic feedback
+            if (navigator.vibrate) {
+                navigator.vibrate([100, 50, 100]);
+            }
+        }
+        
+        // Play voice on load
+        if (window.speechSynthesis.getVoices().length > 0) {
+            playSuccessVoice();
+        } else {
+            window.speechSynthesis.onvoiceschanged = () => playSuccessVoice();
+        }
+
         function showReceipt() {
             window.location.href = '/customer/receipt.html';
         }

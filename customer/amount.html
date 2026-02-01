@@ -166,6 +166,15 @@
             border-color: var(--accent-green);
             color: white;
         }
+        /* Optimize modal animation performance */
+        .note-modal-overlay {
+            will-change: opacity;
+            transform: translateZ(0);
+        }
+        .note-modal {
+            will-change: transform;
+            transform: translateZ(0);
+        }
         .note-modal-footer {
             display: flex;
             gap: 12px;
@@ -472,14 +481,22 @@
             updateDisplay();
         }
 
-        // Note functions
+        // Note functions - optimized for performance
+        let noteModalReady = false;
         function openNoteModal() {
-            document.getElementById('noteModal').classList.add('show');
+            const modal = document.getElementById('noteModal');
             const input = document.getElementById('noteInput');
-            input.value = paymentNote;
-            document.getElementById('charCount').textContent = paymentNote.length;
-            // Focus to show system keyboard
-            setTimeout(() => input.focus(), 100);
+            
+            // Use requestAnimationFrame for smoother animation
+            requestAnimationFrame(() => {
+                modal.classList.add('show');
+                input.value = paymentNote;
+                document.getElementById('charCount').textContent = paymentNote.length;
+                // Delay focus to prevent layout thrashing
+                requestAnimationFrame(() => {
+                    input.focus();
+                });
+            });
         }
 
         function closeNoteModal(event) {
@@ -487,20 +504,24 @@
             document.getElementById('noteModal').classList.remove('show');
         }
 
+        // Debounced char count update
+        let charCountTimeout;
         function updateCharCount() {
-            document.getElementById('charCount').textContent = document.getElementById('noteInput').value.length;
+            if (charCountTimeout) clearTimeout(charCountTimeout);
+            charCountTimeout = setTimeout(() => {
+                document.getElementById('charCount').textContent = document.getElementById('noteInput').value.length;
+            }, 50);
         }
 
         function addTag(tag) {
             const input = document.getElementById('noteInput');
             input.value = input.value ? input.value + '、' + tag : tag;
             updateCharCount();
-            input.focus();
         }
 
         function clearNote() {
             document.getElementById('noteInput').value = '';
-            updateCharCount();
+            document.getElementById('charCount').textContent = '0';
         }
 
         function saveNote() {

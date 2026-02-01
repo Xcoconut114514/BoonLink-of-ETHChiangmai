@@ -470,7 +470,8 @@ body {
 /* ============================================================================
    Number Pad (White Theme)
    ============================================================================ */
-.numpad-container {
+/* Legacy numpad container - deprecated, using new fixed numpad in amount page */
+.numpad-container-legacy {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 8px;
@@ -1037,6 +1038,9 @@ body {
   padding: 12px;
   padding-bottom: calc(12px + env(safe-area-inset-bottom, 0));
   border-top: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  z-index: 100;
 }
 
 .numpad-grid {

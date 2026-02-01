@@ -525,7 +525,7 @@
                 }
 
                 // Navigate to amount page
-                window.location.href = 'amount.html';
+                window.location.href = '/customer/amount.html';
             } else {
                 // Not a valid PromptPay QR
                 alert('无法识别此二维码\n请扫描有效的 PromptPay 二维码');
@@ -655,7 +655,7 @@
                 html5QrCode.stop().catch(console.error);
             }
 
-            window.location.href = 'index.html';
+            window.location.href = '/customer/index.html';
         }
 
         // Hidden element for fallback scanning

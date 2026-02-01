@@ -269,8 +269,11 @@
         <div style="flex-grow: 1;"></div>
 
         <!-- Number Pad -->
-        <div class="numpad-container">
-            <div class="numpad-grid">
+        <div class="numpad-container" id="numpadContainer">
+            <div class="numpad-toggle" onclick="toggleNumpad()">
+                <span id="numpadToggleText">▼ 收起键盘</span>
+            </div>
+            <div class="numpad-grid" id="numpadGrid">
                 <button class="numpad-key" onclick="addDigit('1')">1</button>
                 <button class="numpad-key" onclick="addDigit('2')">2</button>
                 <button class="numpad-key" onclick="addDigit('3')">3</button>
@@ -299,7 +302,50 @@
         </div>
     </div>
 
+    <style>
+        .numpad-toggle {
+            text-align: center;
+            padding: 8px;
+            color: var(--text-secondary);
+            font-size: 13px;
+            cursor: pointer;
+            user-select: none;
+        }
+        .numpad-toggle:active {
+            background: var(--bg-input);
+        }
+        .numpad-grid.hidden {
+            display: none;
+        }
+        .numpad-container.collapsed .numpad-grid {
+            display: none;
+        }
+        .numpad-container.collapsed {
+            padding-bottom: 0;
+        }
+    </style>
+
     <script>
+        // Numpad visibility state
+        let isNumpadVisible = true;
+
+        function toggleNumpad() {
+            if (navigator.vibrate) {
+                navigator.vibrate(5);
+            }
+            isNumpadVisible = !isNumpadVisible;
+            const container = document.getElementById('numpadContainer');
+            const toggleText = document.getElementById('numpadToggleText');
+            
+            if (isNumpadVisible) {
+                container.classList.remove('collapsed');
+                toggleText.textContent = '▼ 收起键盘';
+            } else {
+                container.classList.add('collapsed');
+                toggleText.textContent = '▲ 展开键盘';
+            }
+        }
+
         // USDT rate for hint
         const USDT_RATE = 35.40;
 
@@ -426,7 +472,7 @@
             localStorage.setItem('paymentNote', paymentNote);
 
             // Navigate to token selection
-            window.location.href = 'select-token.html';
+            window.location.href = '/customer/select-token.html';
         }
 
         function goBack() {
@@ -438,7 +484,7 @@
             // Clear amount from QR flag
             localStorage.removeItem('amountFromQR');
 
-            window.location.href = 'scan.html';
+            window.location.href = '/customer/scan.html';
         }
 
         // Note Modal Functions

@@ -18,6 +18,12 @@ const BSC_CONFIG = {
             address: '0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d',
             decimals: 18,
             symbol: 'USDC'
+        },
+        ETH: {
+            address: '0x2170Ed0880ac9A755fd29B2688956BD959F933F8',
+            decimals: 18,
+            symbol: 'ETH',
+            isNative: false
         }
     }
 };

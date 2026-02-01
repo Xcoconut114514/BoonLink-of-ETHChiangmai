@@ -199,6 +199,10 @@
                     data-i18n-placeholder="enterMerchantId" data-i18n-section="merchant"
                     placeholder="输入您的商家 ID" onchange="saveLineSettings()">
 
+                <button class="btn btn-secondary" style="margin-top: 12px; width: 100%;" onclick="testLineConnection()">
+                    <span data-i18n="testLineConnection" data-i18n-section="merchant">测试 LINE 连接</span>
+                </button>
+
                 <div class="help-text">
                     <strong data-i18n="howToGetId" data-i18n-section="merchant">如何获取商家 ID：</strong><br>
                     <span data-i18n="step1" data-i18n-section="merchant">1. 在 LINE 搜索并添加 BoonLink 官方账号</span><br>
@@ -266,9 +270,69 @@
             const lang = activeBtn ? activeBtn.dataset.voiceLang : 'zh';
             console.log('🔊 Testing voice with language:', lang);
             // Use appropriate test message for each language
-            const testNote = lang === 'th' ? 'ทดสอบ' : 
+            const testNote = lang === 'th' ? 'ทดสอบ' :
                             lang === 'en' ? 'test order' : '测试订单';
             playVoiceAnnouncement(100, testNote, lang);
+        }
+
+        // Test LINE connection
+        async function testLineConnection() {
+            const userId = document.getElementById('lineUserId').value.trim();
+            const lang = BoonLinkI18n.getCurrentLanguage();
+
+            if (!userId) {
+                const msg = lang === 'zh' ? '请先输入商家 ID' :
+                           lang === 'th' ? 'กรุณากรอก Merchant ID ก่อน' :
+                           'Please enter Merchant ID first';
+                alert(msg);
+                return;
+            }
+
+            // Show loading state
+            const btn = event.target;
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = lang === 'zh' ? '测试中...' :
+                           lang === 'th' ? 'กำลังทดสอบ...' :
+                           'Testing...';
+
+            try {
+                const response = await fetch('/api/send-line', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        userId: userId,
+                        amountTHB: 0,
+                        note: '测试消息',
+                        orderId: 'TEST',
+                        timestamp: new Date().toLocaleString('zh-CN')
+                    })
+                });
+
+                if (response.ok) {
+                    const msg = lang === 'zh' ? '✅ LINE 连接成功！请检查您的 LINE 是否收到测试消息。' :
+                               lang === 'th' ? '✅ เชื่อมต่อ LINE สำเร็จ! กรุณาตรวจสอบข้อความทดสอบใน LINE' :
+                               '✅ LINE connection successful! Please check your LINE for the test message.';
+                    alert(msg);
+                } else {
+                    const error = await response.json();
+                    const errorMsg = error.message || error.error || 'Unknown error';
+
+                    const msg = lang === 'zh' ? `❌ 连接失败\n\n${errorMsg}` :
+                               lang === 'th' ? `❌ การเชื่อมต่อล้มเหลว\n\n${errorMsg}` :
+                               `❌ Connection failed\n\n${errorMsg}`;
+                    alert(msg);
+                }
+            } catch (e) {
+                console.error('LINE test error:', e);
+                const msg = lang === 'zh' ? '❌ 网络错误\n\nAPI 服务未启动。请使用以下命令启动本地服务：\n\nnpm install -g vercel\nvercel dev\n\n或者部署到 Vercel 后再测试。' :
+                           lang === 'th' ? '❌ ข้อผิดพลาดเครือข่าย\n\nบริการ API ไม่ทำงาน กรุณาใช้คำสั่ง:\n\nnpm install -g vercel\nvercel dev\n\nหรือทดสอบหลังจาก deploy ไป Vercel' :
+                           '❌ Network error\n\nAPI service not started. Please run:\n\nnpm install -g vercel\nvercel dev\n\nOr test after deploying to Vercel.';
+                alert(msg);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
         }
 
         // Save all

@@ -278,116 +278,57 @@
         </div>
     </div>
     
+    <!-- QRCode.js library - lightweight, no dependencies -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    
     <script>
         // ============================================
-        // QR Code Generator - Pure JavaScript (No CDN)
+        // QR Code Generator - Using QRCode library with fallback
         // ============================================
-        const QR = (function() {
-            // QR Code generation using canvas - supports offline
-            function generate(canvas, text, size) {
+        const QRCodeGenerator = {
+            async generate(canvas, text, size) {
                 size = size || 200;
+                canvas.width = size;
+                canvas.height = size;
                 
-                // Try online API first, fallback to data URL method
-                const img = new Image();
-                img.crossOrigin = 'anonymous';
-                
-                // Multiple API fallbacks
-                const encodedText = encodeURIComponent(text);
-                const apis = [
-                    `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodedText}`,
-                    `https://chart.googleapis.com/chart?chs=${size}x${size}&cht=qr&chl=${encodedText}`
-                ];
-                
-                let apiIndex = 0;
-                
-                function tryNextApi() {
-                    if (apiIndex >= apis.length) {
-                        // All APIs failed - draw simple fallback with data
-                        drawSimpleQR(canvas, text, size);
+                try {
+                    // Use the QRCode library from CDN
+                    if (typeof QRCode !== 'undefined') {
+                        await QRCode.toCanvas(canvas, text, {
+                            width: size,
+                            margin: 1,
+                            errorCorrectionLevel: 'M',
+                            color: { dark: '#000000', light: '#ffffff' }
+                        });
+                        console.log('✅ QR generated using QRCode library');
                         return;
                     }
-                    img.src = apis[apiIndex++];
+                } catch (e) {
+                    console.error('QRCode library failed:', e);
                 }
                 
-                img.onload = function() {
+                // Fallback: use API
+                try {
+                    const img = new Image();
+                    img.crossOrigin = 'anonymous';
+                    await new Promise((resolve, reject) => {
+                        img.onload = resolve;
+                        img.onerror = reject;
+                        img.src = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(text)}&format=png`;
+                    });
                     const ctx = canvas.getContext('2d');
                     ctx.fillStyle = '#ffffff';
                     ctx.fillRect(0, 0, size, size);
                     ctx.drawImage(img, 0, 0, size, size);
-                };
-                
-                img.onerror = tryNextApi;
-                tryNextApi();
-            }
-            
-            // Simple QR-like pattern for offline fallback
-            function drawSimpleQR(canvas, data, size) {
-                const ctx = canvas.getContext('2d');
-                ctx.fillStyle = '#ffffff';
-                ctx.fillRect(0, 0, size, size);
-                
-                // Create a hash-based pattern from data
-                const hash = simpleHash(data);
-                const moduleSize = size / 25;
-                
-                // Draw finder patterns
-                drawFinderPattern(ctx, 0, 0, moduleSize * 7);
-                drawFinderPattern(ctx, size - moduleSize * 7, 0, moduleSize * 7);
-                drawFinderPattern(ctx, 0, size - moduleSize * 7, moduleSize * 7);
-                
-                // Draw data pattern based on hash
-                ctx.fillStyle = '#000000';
-                for (let y = 0; y < 25; y++) {
-                    for (let x = 0; x < 25; x++) {
-                        // Skip finder pattern areas
-                        if ((x < 8 && y < 8) || (x > 16 && y < 8) || (x < 8 && y > 16)) continue;
-                        
-                        const bitIndex = (y * 25 + x) % 64;
-                        const byte = hash[Math.floor(bitIndex / 8)];
-                        const bit = (byte >> (bitIndex % 8)) & 1;
-                        
-                        if (bit) {
-                            ctx.fillRect(x * moduleSize, y * moduleSize, moduleSize, moduleSize);
-                        }
-                    }
-                }
-                
-                // Draw timing patterns
-                ctx.fillStyle = '#000000';
-                for (let i = 8; i < 17; i++) {
-                    if (i % 2 === 0) {
-                        ctx.fillRect(i * moduleSize, 6 * moduleSize, moduleSize, moduleSize);
-                        ctx.fillRect(6 * moduleSize, i * moduleSize, moduleSize, moduleSize);
-                    }
+                    console.log('✅ QR generated using API fallback');
+                } catch (e) {
+                    console.error('API fallback failed:', e);
+                    throw new Error('无法生成QR码');
                 }
             }
-            
-            function drawFinderPattern(ctx, x, y, size) {
-                const unit = size / 7;
-                // Outer black
-                ctx.fillStyle = '#000000';
-                ctx.fillRect(x, y, size, size);
-                // White ring
-                ctx.fillStyle = '#ffffff';
-                ctx.fillRect(x + unit, y + unit, size - 2 * unit, size - 2 * unit);
-                // Inner black
-                ctx.fillStyle = '#000000';
-                ctx.fillRect(x + 2 * unit, y + 2 * unit, size - 4 * unit, size - 4 * unit);
-            }
-            
-            function simpleHash(str) {
-                const result = new Uint8Array(8);
-                for (let i = 0; i < str.length; i++) {
-                    result[i % 8] ^= str.charCodeAt(i);
-                    result[(i + 1) % 8] = (result[(i + 1) % 8] + str.charCodeAt(i)) & 0xFF;
-                }
-                return result;
-            }
-            
-            return { generate };
-        })();
+        };
         
-        // ============================================
+                // ============================================
         // EIP-712 Typed Data Signing
         // ============================================
         const EIP712 = {
@@ -655,7 +596,10 @@
                 
                 // Generate QR
                 const canvas = document.getElementById('qrCanvas');
-                QR.generate(canvas, JSON.stringify(qrPayload), 200);
+                const qrDataStr = JSON.stringify(qrPayload);
+                console.log('📱 Generating QR with data length:', qrDataStr.length);
+                console.log('📦 QR Payload:', qrPayload);
+                await QRCodeGenerator.generate(canvas, qrDataStr, 200);
                 
                 // Show QR
                 document.getElementById('inputSection').style.display = 'none';

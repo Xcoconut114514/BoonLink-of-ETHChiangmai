@@ -56,6 +56,23 @@
         const amountTHB = localStorage.getItem('amountTHB') || '0';
         const txHash = localStorage.getItem('txHash') || '';
         const tokenSymbol = localStorage.getItem('tokenSymbol') || 'USDT';
+        const paymentTime = localStorage.getItem('paymentTime') || new Date().toISOString();
+
+        // Save to transaction history
+        const txRecord = {
+            txHash: txHash,
+            merchantName: merchantName,
+            thbAmount: parseFloat(amountTHB) || 0,
+            cryptoAmount: cryptoAmount,
+            token: tokenSymbol,
+            time: paymentTime
+        };
+        const history = JSON.parse(localStorage.getItem('txHistory') || '[]');
+        // Avoid duplicate entries
+        if (!history.find(tx => tx.txHash === txHash)) {
+            history.unshift(txRecord);
+            localStorage.setItem('txHistory', JSON.stringify(history));
+        }
 
         // Display info
         document.getElementById('merchantName').textContent = merchantName;

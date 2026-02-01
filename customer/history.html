@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#191919">
+    <title>交易记录 - BoonLink</title>
+    <link rel="stylesheet" href="/shared/css/wechat-dark.css">
+    <link rel="icon" href="/shared/assets/logo.png" type="image/png">
+    <style>
+        .history-container {
+            min-height: 100vh;
+            background: var(--bg-primary);
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+        
+        /* Header */
+        .history-header {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            background: var(--bg-primary);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .history-back {
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            font-size: 20px;
+            cursor: pointer;
+            padding: 8px;
+            margin-left: -8px;
+        }
+        .history-title {
+            flex: 1;
+            text-align: center;
+            font-size: 17px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        .history-placeholder {
+            width: 36px;
+        }
+        
+        /* Stats Summary */
+        .history-stats {
+            display: flex;
+            margin: 0 16px 16px;
+            padding: 16px;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+        }
+        .stats-item {
+            flex: 1;
+            text-align: center;
+        }
+        .stats-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        .stats-value.green { color: var(--accent-green); }
+        .stats-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+        
+        /* Transaction List */
+        .tx-list {
+            padding: 0 16px;
+        }
+        .tx-date-group {
+            margin-bottom: 20px;
+        }
+        .tx-date {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+            padding-left: 4px;
+        }
+        .tx-item {
+            display: flex;
+            align-items: center;
+            padding: 14px;
+            background: var(--bg-secondary);
+            border-radius: 10px;
+            margin-bottom: 8px;
+        }
+        .tx-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(7, 193, 96, 0.15);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            margin-right: 12px;
+        }
+        .tx-info {
+            flex: 1;
+        }
+        .tx-merchant {
+            font-size: 15px;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+        .tx-time {
+            font-size: 12px;
+            color: var(--text-tertiary);
+            margin-top: 2px;
+        }
+        .tx-amount {
+            text-align: right;
+        }
+        .tx-amount-thb {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        .tx-amount-crypto {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+        
+        /* Empty State */
+        .tx-empty {
+            text-align: center;
+            padding: 60px 20px;
+        }
+        .tx-empty-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+        .tx-empty-text {
+            font-size: 15px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+        .tx-empty-hint {
+            font-size: 13px;
+            color: var(--text-tertiary);
+        }
+    </style>
+</head>
+<body>
+    <div class="history-container">
+        <!-- Header -->
+        <div class="history-header">
+            <button class="history-back" onclick="goBack()">‹</button>
+            <div class="history-title">交易记录</div>
+            <div class="history-placeholder"></div>
+        </div>
+
+        <!-- Stats Summary -->
+        <div class="history-stats">
+            <div class="stats-item">
+                <div class="stats-value green" id="totalAmount">฿0</div>
+                <div class="stats-label">累计消费</div>
+            </div>
+            <div class="stats-item">
+                <div class="stats-value" id="totalCount">0</div>
+                <div class="stats-label">交易笔数</div>
+            </div>
+            <div class="stats-item">
+                <div class="stats-value" id="todayAmount">฿0</div>
+                <div class="stats-label">今日消费</div>
+            </div>
+        </div>
+
+        <!-- Transaction List -->
+        <div class="tx-list" id="txList">
+            <!-- Will be populated by JS -->
+        </div>
+    </div>
+
+    <script>
+        // Load transaction history from localStorage
+        function loadHistory() {
+            const history = JSON.parse(localStorage.getItem('txHistory') || '[]');
+            const txList = document.getElementById('txList');
+            
+            if (history.length === 0) {
+                txList.innerHTML = `
+                    <div class="tx-empty">
+                        <div class="tx-empty-icon">📋</div>
+                        <div class="tx-empty-text">暂无交易记录</div>
+                        <div class="tx-empty-hint">完成首笔支付后将在此显示</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Group by date
+            const grouped = {};
+            let totalAmount = 0;
+            let todayAmount = 0;
+            const today = new Date().toDateString();
+            
+            history.forEach(tx => {
+                const date = new Date(tx.time);
+                const dateKey = date.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' });
+                if (!grouped[dateKey]) grouped[dateKey] = [];
+                grouped[dateKey].push(tx);
+                totalAmount += tx.thbAmount || 0;
+                if (date.toDateString() === today) {
+                    todayAmount += tx.thbAmount || 0;
+                }
+            });
+            
+            // Update stats
+            document.getElementById('totalAmount').textContent = '฿' + totalAmount.toLocaleString();
+            document.getElementById('totalCount').textContent = history.length;
+            document.getElementById('todayAmount').textContent = '฿' + todayAmount.toLocaleString();
+            
+            // Render list
+            let html = '';
+            for (const [date, txs] of Object.entries(grouped)) {
+                html += `<div class="tx-date-group"><div class="tx-date">${date}</div>`;
+                txs.forEach(tx => {
+                    const time = new Date(tx.time).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+                    html += `
+                        <div class="tx-item" onclick="showTxDetail('${tx.txHash}')">
+                            <div class="tx-icon">💳</div>
+                            <div class="tx-info">
+                                <div class="tx-merchant">${tx.merchantName || 'PromptPay 商户'}</div>
+                                <div class="tx-time">${time}</div>
+                            </div>
+                            <div class="tx-amount">
+                                <div class="tx-amount-thb">-฿${(tx.thbAmount || 0).toLocaleString()}</div>
+                                <div class="tx-amount-crypto">${tx.cryptoAmount || '0'} ${tx.token || 'USDT'}</div>
+                            </div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+            }
+            txList.innerHTML = html;
+        }
+        
+        function showTxDetail(txHash) {
+            if (txHash) {
+                window.open(`https://bscscan.com/tx/${txHash}`, '_blank');
+            }
+        }
+        
+        function goBack() {
+            window.location.href = '/customer/';
+        }
+        
+        loadHistory();
+    </script>
+</body>
+</html>

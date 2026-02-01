@@ -38,22 +38,22 @@
         /* Logo Section */
         .home-logo {
             text-align: center;
-            padding: 40px 20px 30px;
+            padding: 20px 20px 16px;
         }
         .home-logo-img {
-            width: 80px;
-            height: 80px;
-            border-radius: 20px;
-            margin-bottom: 16px;
+            width: 56px;
+            height: 56px;
+            border-radius: 14px;
+            margin-bottom: 10px;
         }
         .home-logo-text {
-            font-size: 28px;
+            font-size: 22px;
             font-weight: 700;
             color: var(--text-primary);
-            margin-bottom: 6px;
+            margin-bottom: 4px;
         }
         .home-logo-sub {
-            font-size: 14px;
+            font-size: 12px;
             color: var(--accent-green);
         }
         
@@ -480,12 +480,16 @@
                 </div>
                 <div class="wallet-balance">
                     <div class="balance-item">
-                        <div class="balance-value" id="usdtBalance">--</div>
-                        <div class="balance-label">USDT 余额</div>
+                        <div class="balance-value" id="dailyLimitDisplay">฿20,000</div>
+                        <div class="balance-label">今日限额</div>
                     </div>
                     <div class="balance-item">
-                        <div class="balance-value" id="remainingLimit">฿10,000</div>
-                        <div class="balance-label">今日限额</div>
+                        <div class="balance-value" id="todayUsedDisplay">฿0</div>
+                        <div class="balance-label">今日已消费</div>
+                    </div>
+                    <div class="balance-item">
+                        <div class="balance-value" id="remainingLimit">฿20,000</div>
+                        <div class="balance-label">剩余可用</div>
                     </div>
                 </div>
             </div>
@@ -686,9 +690,9 @@
             
             try {
                 const balance = await BoonLinkWallet.getBalance('USDT');
-                document.getElementById('usdtBalance').textContent = balance + ' USDT';
+                // Balance display removed, just update limits
             } catch (e) {
-                document.getElementById('usdtBalance').textContent = '--';
+                // Ignore balance errors
             }
             
             updateLimitDisplay();
@@ -696,6 +700,8 @@
 
         function updateLimitDisplay() {
             const remaining = userLimits.daily - todayUsed;
+            document.getElementById('dailyLimitDisplay').textContent = '฿' + userLimits.daily.toLocaleString();
+            document.getElementById('todayUsedDisplay').textContent = '฿' + todayUsed.toLocaleString();
             document.getElementById('remainingLimit').textContent = '฿' + Math.max(0, remaining).toLocaleString();
         }
 

@@ -1,5 +1,6 @@
 // BoonLink Wallet Connection + EIP-712 Signing
 // BSC Only - Self-Custody Wallet
+// Supports: MetaMask, OKX Wallet, Coinbase Wallet, Bitget Wallet
 
 const BSC_CONFIG = {
     chainId: 56,
@@ -21,37 +22,116 @@ const BSC_CONFIG = {
     }
 };
 
+// Supported wallets configuration
+const WALLET_PROVIDERS = {
+    metamask: {
+        name: 'MetaMask',
+        icon: '🦊',
+        color: '#F6851B',
+        check: () => window.ethereum?.isMetaMask && !window.ethereum?.isOkxWallet && !window.ethereum?.isBitKeep,
+        getProvider: () => window.ethereum
+    },
+    okx: {
+        name: 'OKX Wallet',
+        icon: '⚫',
+        color: '#000000',
+        check: () => window.okxwallet || window.ethereum?.isOkxWallet,
+        getProvider: () => window.okxwallet || window.ethereum
+    },
+    coinbase: {
+        name: 'Coinbase Wallet',
+        icon: '🔵',
+        color: '#0052FF',
+        check: () => window.coinbaseWalletExtension || window.ethereum?.isCoinbaseWallet,
+        getProvider: () => window.coinbaseWalletExtension || window.ethereum
+    },
+    bitget: {
+        name: 'Bitget Wallet',
+        icon: '💎',
+        color: '#00D4AA',
+        check: () => window.bitkeep?.ethereum || window.ethereum?.isBitKeep,
+        getProvider: () => window.bitkeep?.ethereum || window.ethereum
+    }
+};
+
 // Wallet state
 let walletState = {
     isConnected: false,
     address: null,
-    provider: null
+    provider: null,
+    walletType: null
 };
 
-// Connect wallet
-async function connectWallet() {
-    if (!window.ethereum) {
-        throw new Error('请安装 MetaMask 或其他 Web3 钱包');
+// Detect available wallets
+function detectWallets() {
+    const available = [];
+    for (const [key, wallet] of Object.entries(WALLET_PROVIDERS)) {
+        if (wallet.check()) {
+            available.push({
+                id: key,
+                ...wallet
+            });
+        }
+    }
+    // If no specific wallet detected but ethereum exists, add generic option
+    if (available.length === 0 && window.ethereum) {
+        available.push({
+            id: 'generic',
+            name: 'Web3 钱包',
+            icon: '🔗',
+            color: '#627EEA',
+            getProvider: () => window.ethereum
+        });
+    }
+    return available;
+}
+
+// Connect to specific wallet
+async function connectWallet(walletId = null) {
+    const availableWallets = detectWallets();
+    
+    if (availableWallets.length === 0) {
+        throw new Error('请安装 MetaMask、OKX Wallet、Coinbase Wallet 或 Bitget Wallet');
+    }
+
+    // If walletId specified, find that wallet
+    let selectedWallet;
+    if (walletId) {
+        selectedWallet = availableWallets.find(w => w.id === walletId);
+        if (!selectedWallet) {
+            throw new Error(`${walletId} 钱包未检测到`);
+        }
+    } else {
+        // Use first available
+        selectedWallet = availableWallets[0];
+    }
+
+    const provider = selectedWallet.getProvider();
+    if (!provider) {
+        throw new Error(`${selectedWallet.name} 连接失败`);
     }
 
     try {
         // Request accounts
-        const accounts = await window.ethereum.request({
+        const accounts = await provider.request({
             method: 'eth_requestAccounts'
         });
 
         // Switch to BSC
-        await ensureBSCNetwork();
+        await ensureBSCNetwork(provider);
 
         walletState = {
             isConnected: true,
             address: accounts[0],
-            provider: window.ethereum
+            provider: provider,
+            walletType: selectedWallet.id,
+            walletName: selectedWallet.name
         };
 
         // Save state
         localStorage.setItem('walletConnected', 'true');
         localStorage.setItem('walletAddress', accounts[0]);
+        localStorage.setItem('walletType', selectedWallet.id);
 
         return walletState;
     } catch (error) {
@@ -61,18 +141,19 @@ async function connectWallet() {
 }
 
 // Ensure BSC network
-async function ensureBSCNetwork() {
-    const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+async function ensureBSCNetwork(provider = null) {
+    const p = provider || walletState.provider || window.ethereum;
+    const chainId = await p.request({ method: 'eth_chainId' });
 
     if (chainId !== BSC_CONFIG.chainIdHex) {
         try {
-            await window.ethereum.request({
+            await p.request({
                 method: 'wallet_switchEthereumChain',
                 params: [{ chainId: BSC_CONFIG.chainIdHex }]
             });
         } catch (error) {
             if (error.code === 4902) {
-                await window.ethereum.request({
+                await p.request({
                     method: 'wallet_addEthereumChain',
                     params: [{
                         chainId: BSC_CONFIG.chainIdHex,
@@ -92,7 +173,8 @@ async function ensureBSCNetwork() {
 // Get token balance
 async function getTokenBalance(tokenSymbol) {
     if (!walletState.isConnected) throw new Error('钱包未连接');
-
+    
+    const provider = walletState.provider || window.ethereum;
     const token = BSC_CONFIG.tokens[tokenSymbol];
     if (!token) throw new Error('不支持的代币');
 
@@ -100,7 +182,7 @@ async function getTokenBalance(tokenSymbol) {
     const data = '0x70a08231' + walletState.address.slice(2).padStart(64, '0');
 
     try {
-        const result = await window.ethereum.request({
+        const result = await provider.request({
             method: 'eth_call',
             params: [{
                 to: token.address,
@@ -175,7 +257,8 @@ async function signOfflinePayment(paymentData) {
     });
 
     try {
-        const signature = await window.ethereum.request({
+        const provider = walletState.provider || window.ethereum;
+        const signature = await provider.request({
             method: 'eth_signTypedData_v4',
             params: [walletState.address, msgParams]
         });
@@ -238,23 +321,41 @@ async function createOfflinePaymentQR(amountTHB, tokenSymbol, promptPayId, note)
 async function checkPreviousConnection() {
     const wasConnected = localStorage.getItem('walletConnected') === 'true';
     const savedAddress = localStorage.getItem('walletAddress');
+    const savedWalletType = localStorage.getItem('walletType');
 
-    if (wasConnected && window.ethereum && savedAddress) {
-        try {
-            const accounts = await window.ethereum.request({
-                method: 'eth_accounts'
-            });
-
-            if (accounts.length > 0 && accounts[0].toLowerCase() === savedAddress.toLowerCase()) {
-                walletState = {
-                    isConnected: true,
-                    address: accounts[0],
-                    provider: window.ethereum
-                };
-                return walletState;
+    if (wasConnected && savedAddress) {
+        // Try to find the saved wallet type
+        let provider = null;
+        if (savedWalletType && WALLET_PROVIDERS[savedWalletType]) {
+            const wallet = WALLET_PROVIDERS[savedWalletType];
+            if (wallet.check()) {
+                provider = wallet.getProvider();
             }
-        } catch (e) {
-            console.log('Auto-reconnect failed');
+        }
+        // Fallback to window.ethereum
+        if (!provider && window.ethereum) {
+            provider = window.ethereum;
+        }
+
+        if (provider) {
+            try {
+                const accounts = await provider.request({
+                    method: 'eth_accounts'
+                });
+
+                if (accounts.length > 0 && accounts[0].toLowerCase() === savedAddress.toLowerCase()) {
+                    walletState = {
+                        isConnected: true,
+                        address: accounts[0],
+                        provider: provider,
+                        walletType: savedWalletType || 'generic',
+                        walletName: WALLET_PROVIDERS[savedWalletType]?.name || 'Web3 钱包'
+                    };
+                    return walletState;
+                }
+            } catch (e) {
+                console.log('Auto-reconnect failed');
+            }
         }
     }
     return null;
@@ -265,10 +366,13 @@ function disconnectWallet() {
     walletState = {
         isConnected: false,
         address: null,
-        provider: null
+        provider: null,
+        walletType: null,
+        walletName: null
     };
     localStorage.removeItem('walletConnected');
     localStorage.removeItem('walletAddress');
+    localStorage.removeItem('walletType');
 }
 
 // Export for use in HTML
@@ -279,6 +383,8 @@ window.BoonLinkWallet = {
     sign: signOfflinePayment,
     createPaymentQR: createOfflinePaymentQR,
     checkConnection: checkPreviousConnection,
+    detectWallets: detectWallets,
     getState: () => walletState,
+    WALLET_PROVIDERS,
     BSC_CONFIG
 };

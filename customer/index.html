@@ -35,9 +35,25 @@
                     使用自托管钱包进行安全支付
                 </p>
 
-                <button class="btn btn-primary btn-large" onclick="handleConnect()" style="margin-bottom: 12px;">
-                    <span data-i18n="connectMetaMask" data-i18n-section="customer">连接 MetaMask</span>
-                </button>
+                <!-- Wallet Options -->
+                <div id="walletOptions" class="wallet-options">
+                    <button class="btn btn-wallet" onclick="handleConnect('metamask')" data-wallet="metamask">
+                        <span class="wallet-icon">🦊</span>
+                        <span class="wallet-name">MetaMask</span>
+                    </button>
+                    <button class="btn btn-wallet" onclick="handleConnect('okx')" data-wallet="okx">
+                        <span class="wallet-icon">⚫</span>
+                        <span class="wallet-name">OKX Wallet</span>
+                    </button>
+                    <button class="btn btn-wallet" onclick="handleConnect('coinbase')" data-wallet="coinbase">
+                        <span class="wallet-icon">🔵</span>
+                        <span class="wallet-name">Coinbase</span>
+                    </button>
+                    <button class="btn btn-wallet" onclick="handleConnect('bitget')" data-wallet="bitget">
+                        <span class="wallet-icon">💎</span>
+                        <span class="wallet-name">Bitget</span>
+                    </button>
+                </div>
 
                 <div class="details-list" style="margin-top: 20px;">
                     <div class="detail-item">
@@ -59,7 +75,10 @@
         <!-- Connected Section -->
         <div class="app-content" id="connectedSection" style="display: none;">
             <div class="card">
-                <div class="card-header" data-i18n="walletConnected" data-i18n-section="customer">钱包已连接</div>
+                <div class="card-header">
+                    <span id="connectedWalletIcon">🦊</span> 
+                    <span id="connectedWalletName" data-i18n="walletConnected" data-i18n-section="customer">钱包已连接</span>
+                </div>
                 <div class="details-list">
                     <div class="detail-item">
                         <span class="detail-label" data-i18n="address" data-i18n-section="customer">地址</span>
@@ -100,7 +119,62 @@
     <script src="/customer/js/wallet.js"></script>
     <script src="/customer/js/payment-limits.js"></script>
     <script src="/shared/js/i18n.js"></script>
+    <style>
+        /* Multi-wallet styles */
+        .wallet-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .btn-wallet {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 16px 12px;
+            border: 2px solid var(--border-color, #e0e0e0);
+            border-radius: 12px;
+            background: var(--card-bg, #fff);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .btn-wallet:hover {
+            border-color: var(--primary-color, #3B82F6);
+            background: var(--hover-bg, #f8fafc);
+        }
+        .btn-wallet:active {
+            transform: scale(0.98);
+        }
+        .btn-wallet .wallet-icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+        .btn-wallet .wallet-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary, #1a1a1a);
+        }
+        .btn-wallet.unavailable {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .btn-wallet.unavailable .wallet-name::after {
+            content: ' (未安装)';
+            font-size: 11px;
+            color: var(--text-tertiary, #999);
+        }
+    </style>
     <script>
+        // Wallet icons mapping
+        const WALLET_ICONS = {
+            metamask: '🦊',
+            okx: '⚫',
+            coinbase: '🔵',
+            bitget: '💎',
+            generic: '🔗'
+        };
+
         // Wait for scripts to load
         async function init() {
             // Ensure BoonLinkWallet is loaded
@@ -108,19 +182,53 @@
                 console.error('BoonLinkWallet not loaded');
                 return;
             }
+            
+            // Check available wallets and update UI
+            updateWalletButtons();
+            
+            // Check previous connection
             const state = await BoonLinkWallet.checkConnection();
             if (state && state.isConnected) {
                 await showConnectedState(state);
             }
         }
 
+        // Update wallet button states based on availability
+        function updateWalletButtons() {
+            const availableWallets = BoonLinkWallet.detectWallets();
+            const availableIds = availableWallets.map(w => w.id);
+            
+            document.querySelectorAll('.btn-wallet').forEach(btn => {
+                const walletId = btn.getAttribute('data-wallet');
+                if (!availableIds.includes(walletId) && walletId !== 'generic') {
+                    btn.classList.add('unavailable');
+                }
+            });
+        }
+
         // Connect wallet
-        async function handleConnect() {
+        async function handleConnect(walletId) {
+            const btn = document.querySelector(`[data-wallet="${walletId}"]`);
+            if (btn && btn.classList.contains('unavailable')) {
+                // Open wallet download page
+                const downloadUrls = {
+                    metamask: 'https://metamask.io/download/',
+                    okx: 'https://www.okx.com/web3',
+                    coinbase: 'https://www.coinbase.com/wallet',
+                    bitget: 'https://web3.bitget.com/'
+                };
+                if (downloadUrls[walletId]) {
+                    window.open(downloadUrls[walletId], '_blank');
+                }
+                return;
+            }
+            
             try {
-                const state = await BoonLinkWallet.connect();
+                const state = await BoonLinkWallet.connect(walletId);
                 await showConnectedState(state);
             } catch (error) {
-                alert(BoonLinkI18n.tc('error') + ': ' + error.message);
+                const errorMsg = typeof BoonLinkI18n !== 'undefined' ? BoonLinkI18n.tc('error') : '错误';
+                alert(errorMsg + ': ' + error.message);
             }
         }
 
@@ -136,6 +244,12 @@
             document.getElementById('connectSection').style.display = 'none';
             document.getElementById('connectedSection').style.display = 'block';
 
+            // Display wallet icon and name
+            const walletIcon = WALLET_ICONS[state.walletType] || '🔗';
+            document.getElementById('connectedWalletIcon').textContent = walletIcon;
+            document.getElementById('connectedWalletName').textContent = 
+                state.walletName || '钱包已连接';
+
             // Display address
             const addr = state.address;
             document.getElementById('walletAddress').textContent =
@@ -150,9 +264,11 @@
             }
 
             // Get limit status
-            const limitStatus = BoonLinkLimits.getLimitStatus();
-            document.getElementById('remainingLimit').textContent =
-                '฿' + limitStatus.remainingDaily.toLocaleString();
+            if (typeof BoonLinkLimits !== 'undefined') {
+                const limitStatus = BoonLinkLimits.getLimitStatus();
+                document.getElementById('remainingLimit').textContent =
+                    '฿' + limitStatus.remainingDaily.toLocaleString();
+            }
         }
 
         // Initialize

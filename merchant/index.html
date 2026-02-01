@@ -53,7 +53,7 @@
         /* Logo Section */
         .home-logo {
             text-align: center;
-            padding: 20px 20px 16px;
+            padding: 8px 20px 16px;
         }
         .home-logo-img {
             width: 56px;
@@ -243,7 +243,7 @@
         <!-- Header -->
         <div class="home-header">
             <div></div>
-            <div class="home-header-title" id="headerTitle">商家端</div>
+            <div></div>
             <div class="lang-switcher">
                 <button class="lang-btn active" data-lang="zh" onclick="setLang('zh')">中</button>
                 <button class="lang-btn" data-lang="en" onclick="setLang('en')">EN</button>
@@ -428,7 +428,6 @@
         }
 
         function applyTranslations() {
-            document.getElementById('headerTitle').textContent = t('headerTitle');
             document.querySelector('.home-logo-sub').textContent = t('merchantReceive');
             document.querySelector('.home-logo-badge').textContent = '🏪 ' + t('merchantPortal');
             document.querySelector('.stats-title').textContent = t('receiveStats');

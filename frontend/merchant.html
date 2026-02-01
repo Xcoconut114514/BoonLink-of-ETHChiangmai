@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#000000">
+    <meta name="theme-color" content="#EDEDED">
     <title>商家收款凭证 - BoonLink</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
@@ -16,21 +16,21 @@
             <button class="lang-btn" data-lang="th" onclick="switchLanguage('th')">ไทย</button>
         </div>
 
-        <!-- Logo & Success -->
-        <div class="logo-container" style="padding-top: 40px;">
-            <div class="logo-icon">🔗</div>
-            <div style="font-size: 24px; font-weight: 600; margin-top: 12px;">BoonLink</div>
-            <div class="success-title" data-i18n="paymentReceived">收款成功</div>
+        <!-- Logo & Success Header -->
+        <div class="merchant-header">
+            <img src="assets/logo.png" alt="BoonLink" class="merchant-logo">
+            <div class="merchant-brand">BoonLink</div>
+            <div class="merchant-status" data-i18n="paymentReceived">收款成功</div>
         </div>
 
         <!-- Amount Display -->
-        <div class="amount-display">
-            <div class="amount-value" style="font-size: 64px;" id="amountTHB">฿40.00</div>
-            <div class="amount-currency" data-i18n="thb">泰铢</div>
+        <div class="amount-display-large">
+            <div class="amount-value-xl" id="amountTHB">฿40.00</div>
+            <div class="amount-currency-label" data-i18n="thb">泰铢</div>
         </div>
 
         <!-- Payment Details -->
-        <div class="app-content">
+        <div class="app-content" style="padding-top: 0;">
             <div class="details-list">
                 <div class="detail-item">
                     <span class="detail-label" data-i18n="payer">付款人</span>
@@ -54,25 +54,122 @@
                 </div>
             </div>
 
-            <!-- Voice Announcement Button (Optional) -->
-            <button class="btn btn-secondary btn-large" onclick="playVoiceAnnouncement()" style="margin-top: 32px;">
-                <span style="font-size: 20px; margin-right: 8px;">🔊</span>
+            <!-- Voice Announcement Button -->
+            <button class="btn btn-secondary btn-large voice-btn" onclick="playVoiceAnnouncement()">
+                <span class="voice-icon">🔊</span>
                 <span data-i18n="voiceAnnouncement">语音播报</span>
             </button>
 
             <!-- New Payment Button -->
-            <button class="btn btn-primary btn-large" onclick="newPayment()" style="margin-top: 16px;">
+            <button class="btn btn-primary btn-large" onclick="newPayment()">
                 <span data-i18n="newPayment">新的支付</span>
             </button>
 
             <!-- Back to Home -->
             <div style="text-align: center; margin-top: 24px;">
-                <a href="index.html" style="color: var(--text-secondary); font-size: 14px; text-decoration: none;">
+                <a href="index.html" class="back-link">
                     <span data-i18n="backToHome">返回首页</span>
                 </a>
             </div>
+
+            <!-- Powered by -->
+            <div class="powered-by">
+                <span>Powered by</span>
+                <img src="assets/logo.png" alt="BoonLink" class="powered-logo">
+                <span>BoonLink</span>
+            </div>
         </div>
     </div>
+
+    <style>
+        .merchant-header {
+            text-align: center;
+            padding: 32px 20px 24px;
+            background: linear-gradient(135deg, #667EEA 0%, #07C160 100%);
+            color: white;
+        }
+
+        .merchant-logo {
+            width: 64px;
+            height: 64px;
+            border-radius: 16px;
+            margin-bottom: 12px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        .merchant-brand {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .merchant-status {
+            font-size: 15px;
+            opacity: 0.95;
+        }
+
+        .amount-display-large {
+            text-align: center;
+            padding: 32px 20px;
+            background: var(--bg-card);
+            margin: 16px;
+            border-radius: 16px;
+            box-shadow: var(--shadow-card);
+        }
+
+        .amount-value-xl {
+            font-size: 56px;
+            font-weight: 300;
+            color: var(--text-primary);
+            letter-spacing: -2px;
+            line-height: 1;
+        }
+
+        .amount-currency-label {
+            font-size: 16px;
+            color: var(--text-secondary);
+            margin-top: 8px;
+        }
+
+        .voice-btn {
+            margin-top: 24px;
+            margin-bottom: 12px;
+        }
+
+        .voice-icon {
+            font-size: 20px;
+            margin-right: 8px;
+        }
+
+        .back-link {
+            color: var(--text-secondary);
+            font-size: 14px;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .back-link:active {
+            color: var(--text-primary);
+        }
+
+        .powered-by {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            margin-top: 32px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border-color);
+            font-size: 12px;
+            color: var(--text-tertiary);
+        }
+
+        .powered-logo {
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+        }
+    </style>
 
     <script>
         // Translations
@@ -130,7 +227,7 @@
 
         // Update display
         document.getElementById('amountTHB').textContent = `฿${amountTHB.toFixed(2)}`;
-        document.getElementById('payerAddress').textContent = txHash.substring(0, 10);
+        document.getElementById('payerAddress').textContent = txHash.substring(0, 10) + '...';
         document.getElementById('paymentMethod').textContent = `${selectedToken} (BSC)`;
 
         const cryptoFormatted = selectedToken === 'ETH'
@@ -172,8 +269,11 @@
 
             const voiceText = translations[currentLang].voiceText.replace('{amount}', amountTHB.toFixed(2));
 
-            // In real app, use Speech Synthesis API
+            // Use Speech Synthesis API
             if ('speechSynthesis' in window) {
+                // Cancel any ongoing speech
+                window.speechSynthesis.cancel();
+
                 const utterance = new SpeechSynthesisUtterance(voiceText);
 
                 // Set language
@@ -187,6 +287,7 @@
 
                 utterance.rate = 0.9;
                 utterance.pitch = 1.0;
+                utterance.volume = 1.0;
 
                 window.speechSynthesis.speak(utterance);
             } else {
@@ -204,16 +305,20 @@
             localStorage.removeItem('amountTHB');
             localStorage.removeItem('selectedToken');
             localStorage.removeItem('amountCrypto');
+            localStorage.removeItem('txHash');
+            localStorage.removeItem('timestamp');
+            localStorage.removeItem('orderId');
+            localStorage.removeItem('amountFromQR');
+            localStorage.removeItem('scannedQR');
 
-            // Go to amount page
-            window.location.href = 'amount.html';
+            // Go to scan page
+            window.location.href = 'scan.html';
         }
 
-        // Auto-play voice on load (optional)
-        window.addEventListener('load', () => {
-            // Uncomment to auto-play
-            // setTimeout(playVoiceAnnouncement, 500);
-        });
+        // Auto-play voice on load (optional - uncomment to enable)
+        // window.addEventListener('load', () => {
+        //     setTimeout(playVoiceAnnouncement, 500);
+        // });
     </script>
 </body>
 </html>

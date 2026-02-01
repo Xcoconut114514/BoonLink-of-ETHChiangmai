@@ -3,118 +3,152 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#000000">
-    <meta name="description" content="BoonLink - Crypto to PromptPay Instant Payment">
-    <title>BoonLink - Crypto Pay</title>
+    <meta name="theme-color" content="#EDEDED">
+    <meta name="description" content="BoonLink - Crypto to PromptPay Instant Payment with Offline Support">
+    <title>BoonLink</title>
     <link rel="stylesheet" href="css/style.css">
+    <link rel="icon" href="assets/logo.png" type="image/png">
 </head>
 <body>
     <div class="app-container">
         <!-- Logo Section -->
-        <div class="logo-container" style="padding-top: 80px;">
-            <div class="logo-icon">🔗</div>
+        <div class="logo-container">
+            <img src="assets/logo.png" alt="BoonLink" class="logo-image">
             <div class="logo-text">BoonLink</div>
             <div class="logo-subtitle">Crypto → PromptPay</div>
         </div>
 
         <!-- Main Content -->
-        <div class="app-content">
-            <!-- Feature Cards -->
-            <div style="margin: 40px 0;">
-                <a href="amount.html?merchant=TUNGNGERN&amount=40" class="btn btn-primary btn-large" style="margin-bottom: 16px;">
-                    💳 开始扫码支付
-                </a>
-
-                <a href="merchant.html" class="btn btn-secondary btn-large">
-                    🏪 商家端演示
-                </a>
+        <div class="app-content" style="padding-top: 0;">
+            <!-- Offline Feature Banner (Key Selling Point) -->
+            <div class="offline-banner">
+                <div class="offline-banner-title">
+                    <span class="offline-status-dot"></span>
+                    支持离线签名
+                </div>
+                <div class="offline-banner-desc">
+                    山区信号弱？没问题！交易本地签名，网络恢复后自动同步结算
+                </div>
             </div>
 
-            <!-- Info Cards -->
-            <div class="card">
+            <!-- Main Action Buttons -->
+            <a href="scan.html" class="btn btn-primary btn-large" style="margin-bottom: 12px;">
+                扫码支付
+            </a>
+
+            <a href="merchant.html" class="btn btn-secondary btn-large">
+                商家收款
+            </a>
+
+            <!-- Supported Tokens -->
+            <div class="card" style="margin-top: 20px;">
                 <div class="card-header">支持代币</div>
-                <div style="display: flex; gap: 16px; margin-top: 12px;">
-                    <div style="flex: 1; text-align: center;">
-                        <div style="font-size: 32px;">💵</div>
-                        <div style="font-size: 13px; color: var(--text-secondary); margin-top: 4px;">USDT</div>
+                <div style="display: flex; gap: 12px;">
+                    <div style="flex: 1; text-align: center; padding: 12px; background: var(--bg-input); border-radius: 8px;">
+                        <div style="font-size: 28px;">💵</div>
+                        <div style="font-size: 13px; color: var(--text-primary); font-weight: 500; margin-top: 4px;">USDT</div>
                     </div>
-                    <div style="flex: 1; text-align: center;">
-                        <div style="font-size: 32px;">🔵</div>
-                        <div style="font-size: 13px; color: var(--text-secondary); margin-top: 4px;">USDC</div>
+                    <div style="flex: 1; text-align: center; padding: 12px; background: var(--bg-input); border-radius: 8px;">
+                        <div style="font-size: 28px;">🔵</div>
+                        <div style="font-size: 13px; color: var(--text-primary); font-weight: 500; margin-top: 4px;">USDC</div>
                     </div>
-                    <div style="flex: 1; text-align: center;">
-                        <div style="font-size: 32px;">💎</div>
-                        <div style="font-size: 13px; color: var(--text-secondary); margin-top: 4px;">ETH</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="card-header">网络优势</div>
-                <div class="details-list" style="margin-top: 12px; background: transparent;">
-                    <div class="detail-item" style="padding: 8px 0;">
-                        <span class="detail-label">网络</span>
-                        <span class="detail-value">BSC (Binance Smart Chain)</span>
-                    </div>
-                    <div class="detail-item" style="padding: 8px 0;">
-                        <span class="detail-label">Gas 费</span>
-                        <span class="detail-value" style="color: var(--accent-green);">< $0.01</span>
-                    </div>
-                    <div class="detail-item" style="padding: 8px 0; border: none;">
-                        <span class="detail-label">结算速度</span>
-                        <span class="detail-value">~ 3 秒</span>
+                    <div style="flex: 1; text-align: center; padding: 12px; background: var(--bg-input); border-radius: 8px;">
+                        <div style="font-size: 28px;">💎</div>
+                        <div style="font-size: 13px; color: var(--text-primary); font-weight: 500; margin-top: 4px;">ETH</div>
                     </div>
                 </div>
             </div>
 
-            <div class="card">
-                <div class="card-header">为什么选择 BoonLink？</div>
-                <div style="margin-top: 12px; font-size: 14px; line-height: 1.8; color: var(--text-secondary);">
-                    <p style="margin-bottom: 8px;">✅ 国际卡无法用 PromptPay？用加密货币</p>
-                    <p style="margin-bottom: 8px;">✅ 即时到账，商户立即收到泰铢</p>
-                    <p style="margin-bottom: 8px;">✅ 低手续费，比换汇更划算</p>
-                    <p>✅ 支持离线签名，山区也能用</p>
+            <!-- Network Info -->
+            <div class="details-list" style="margin-top: 12px;">
+                <div class="detail-item">
+                    <span class="detail-label">网络</span>
+                    <span class="detail-value">BSC (Binance Smart Chain)</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Gas 费</span>
+                    <span class="detail-value success">< $0.01</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">结算速度</span>
+                    <span class="detail-value">即时到账</span>
                 </div>
             </div>
 
-            <!-- Demo Flow -->
-            <div style="margin-top: 40px; text-align: center;">
-                <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 16px;">
-                    演示流程
+            <!-- Why BoonLink - Expandable Card -->
+            <div class="feature-card" id="whyBoonlink">
+                <div class="feature-card-header" onclick="toggleFeatureCard('whyBoonlink')">
+                    <span class="feature-card-title">
+                        <span>💡</span>
+                        为什么选择 BoonLink？
+                    </span>
+                    <span class="feature-card-arrow">▼</span>
                 </div>
-                <div style="display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 13px; color: var(--text-secondary);">
-                    <span>扫码</span>
-                    <span>→</span>
-                    <span>输入金额</span>
-                    <span>→</span>
-                    <span>选择代币</span>
-                    <span>→</span>
-                    <span>支付成功</span>
+                <div class="feature-card-content">
+                    <div class="feature-card-content-inner">
+                        <div class="feature-item">
+                            <span class="feature-item-icon">✓</span>
+                            <span><strong>国际卡不可用？</strong> 用加密货币直接支付泰国商户</span>
+                        </div>
+                        <div class="feature-item">
+                            <span class="feature-item-icon">✓</span>
+                            <span><strong>即时到账</strong> 商户立即收到泰铢，无需等待</span>
+                        </div>
+                        <div class="feature-item">
+                            <span class="feature-item-icon">✓</span>
+                            <span><strong>低手续费</strong> 比传统换汇更划算，透明定价</span>
+                        </div>
+                        <div class="feature-item">
+                            <span class="feature-item-icon">✓</span>
+                            <span><strong>离线支持</strong> 山区信号弱也能完成支付</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Footer Info -->
-        <div style="text-align: center; padding: 40px 20px 60px; font-size: 12px; color: var(--text-tertiary);">
+        <!-- Footer -->
+        <div class="footer-info">
             <p>🔒 Non-custodial · 私钥不离手</p>
-            <p style="margin-top: 8px;">Made for Chiang Mai Hackathon 2025</p>
         </div>
     </div>
 
     <script>
-        // Simple navigation helper
-        document.querySelectorAll('a[href]').forEach(link => {
-            link.addEventListener('click', function(e) {
-                // Haptic feedback simulation
-                if (navigator.vibrate) {
-                    navigator.vibrate(10);
-                }
-            });
-        });
+        // Toggle feature card expansion
+        function toggleFeatureCard(id) {
+            const card = document.getElementById(id);
+            card.classList.toggle('expanded');
 
-        // Store demo data
+            // Haptic feedback
+            if (navigator.vibrate) {
+                navigator.vibrate(5);
+            }
+        }
+
+        // Check network status for offline banner
+        function updateNetworkStatus() {
+            const banner = document.querySelector('.offline-banner');
+            const dot = document.querySelector('.offline-status-dot');
+            const title = document.querySelector('.offline-banner-title');
+
+            if (navigator.onLine) {
+                dot.style.background = '#91ED61';
+                title.innerHTML = '<span class="offline-status-dot" style="background: #91ED61;"></span> 在线 · 支持离线签名';
+            } else {
+                dot.style.background = '#FA9D3B';
+                title.innerHTML = '<span class="offline-status-dot" style="background: #FA9D3B; animation: pulse 1s infinite;"></span> 离线模式 · 交易将在恢复网络后同步';
+            }
+        }
+
+        // Listen for network changes
+        window.addEventListener('online', updateNetworkStatus);
+        window.addEventListener('offline', updateNetworkStatus);
+
+        // Initialize
+        updateNetworkStatus();
+
+        // Store default demo data
         localStorage.setItem('merchantName', 'TUNGNGERN（）');
-        localStorage.setItem('amountTHB', '40');
     </script>
 </body>
 </html>

@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#EDEDED">
+    <title>扫描二维码 - BoonLink</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <style>
+        /* Scanner specific styles */
+        .scanner-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #000;
+            z-index: 100;
+        }
+
+        .scanner-header {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            padding-top: calc(env(safe-area-inset-top) + 16px);
+            z-index: 110;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.6), transparent);
+        }
+
+        .scanner-header .icon-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: #fff;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+        }
+
+        .scanner-header .title {
+            color: #fff;
+            font-size: 17px;
+            font-weight: 500;
+        }
+
+        #qr-reader {
+            width: 100%;
+            height: 100%;
+        }
+
+        #qr-reader video {
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: cover !important;
+        }
+
+        .scan-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 105;
+        }
+
+        .scan-frame {
+            width: 260px;
+            height: 260px;
+            position: relative;
+            border-radius: 24px;
+            overflow: visible;
+            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.6);
+        }
+
+        .scan-frame-corner {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--accent-green);
+        }
+
+        .scan-frame-corner.top-left {
+            top: -2px;
+            left: -2px;
+            border-right: none;
+            border-bottom: none;
+            border-radius: 24px 0 0 0;
+        }
+
+        .scan-frame-corner.top-right {
+            top: -2px;
+            right: -2px;
+            border-left: none;
+            border-bottom: none;
+            border-radius: 0 24px 0 0;
+        }
+
+        .scan-frame-corner.bottom-left {
+            bottom: -2px;
+            left: -2px;
+            border-right: none;
+            border-top: none;
+            border-radius: 0 0 0 24px;
+        }
+
+        .scan-frame-corner.bottom-right {
+            bottom: -2px;
+            right: -2px;
+            border-left: none;
+            border-top: none;
+            border-radius: 0 0 24px 0;
+        }
+
+        .scan-line {
+            position: absolute;
+            top: 0;
+            left: 20px;
+            right: 20px;
+            height: 3px;
+            background: linear-gradient(90deg,
+                transparent,
+                var(--accent-green),
+                var(--accent-green),
+                transparent
+            );
+            border-radius: 2px;
+            animation: scanMove 2s ease-in-out infinite;
+            box-shadow: 0 0 20px var(--accent-green);
+        }
+
+        @keyframes scanMove {
+            0%, 100% { top: 20px; opacity: 1; }
+            50% { top: calc(100% - 23px); opacity: 0.8; }
+        }
+
+        .scan-hint {
+            margin-top: 32px;
+            color: #fff;
+            font-size: 15px;
+            text-align: center;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+        }
+
+        .scan-footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 24px 20px;
+            padding-bottom: calc(env(safe-area-inset-bottom) + 24px);
+            background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+            z-index: 110;
+        }
+
+        .upload-btn {
+            width: 100%;
+            padding: 16px;
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 12px;
+            color: #fff;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            transition: all 0.2s;
+        }
+
+        .upload-btn:active {
+            background: rgba(255,255,255,0.25);
+            transform: scale(0.98);
+        }
+
+        /* Fallback UI */
+        .fallback-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+            background: var(--bg-primary);
+        }
+
+        .fallback-icon {
+            font-size: 64px;
+            margin-bottom: 24px;
+        }
+
+        .fallback-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 12px;
+        }
+
+        .fallback-desc {
+            font-size: 14px;
+            color: var(--text-secondary);
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        /* Permission request UI */
+        .permission-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 40px 20px;
+            background: var(--bg-primary);
+            text-align: center;
+        }
+
+        .permission-icon {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-green), #00A550);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            margin-bottom: 32px;
+            box-shadow: 0 8px 32px rgba(7, 193, 96, 0.3);
+        }
+
+        .permission-title {
+            font-size: 22px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 12px;
+        }
+
+        .permission-desc {
+            font-size: 15px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 40px;
+            max-width: 280px;
+        }
+
+        .permission-features {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-bottom: 40px;
+            width: 100%;
+            max-width: 300px;
+        }
+
+        .permission-feature {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            background: var(--bg-card);
+            border-radius: 12px;
+            text-align: left;
+        }
+
+        .permission-feature-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            background: rgba(7, 193, 96, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .permission-feature-text {
+            font-size: 14px;
+            color: var(--text-primary);
+        }
+
+        /* Loading state */
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255,255,255,0.2);
+            border-top-color: var(--accent-green);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 16px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            color: #fff;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Permission Request Screen -->
+    <div class="permission-container" id="permissionScreen">
+        <div class="permission-icon">📷</div>
+        <div class="permission-title">开启相机扫码</div>
+        <div class="permission-desc">
+            BoonLink 需要访问您的相机来扫描 PromptPay 二维码
+        </div>
+
+        <div class="permission-features">
+            <div class="permission-feature">
+                <div class="permission-feature-icon">🔒</div>
+                <div class="permission-feature-text">仅用于扫描二维码，不会拍照保存</div>
+            </div>
+            <div class="permission-feature">
+                <div class="permission-feature-icon">⚡</div>
+                <div class="permission-feature-text">快速识别 PromptPay 收款码</div>
+            </div>
+            <div class="permission-feature">
+                <div class="permission-feature-icon">📱</div>
+                <div class="permission-feature-text">也支持从相册选择图片</div>
+            </div>
+        </div>
+
+        <button class="btn btn-primary btn-large" onclick="requestCameraPermission()" style="width: 100%; max-width: 300px;">
+            开启相机
+        </button>
+
+        <button class="btn btn-secondary" onclick="uploadImageFallback()" style="width: 100%; max-width: 300px; margin-top: 12px;">
+            从相册选择
+        </button>
+
+        <a href="index.html" style="color: var(--text-secondary); font-size: 14px; margin-top: 24px; text-decoration: none;">
+            返回首页
+        </a>
+    </div>
+
+    <!-- Scanner Screen -->
+    <div class="scanner-container" id="scannerScreen" style="display: none;">
+        <div class="scanner-header">
+            <button class="icon-btn" onclick="goBack()">✕</button>
+            <span class="title">扫描二维码</span>
+            <button class="icon-btn" id="flashBtn" onclick="toggleFlash()" style="visibility: hidden;">🔦</button>
+        </div>
+
+        <div id="qr-reader"></div>
+
+        <div class="scan-overlay">
+            <div class="scan-frame">
+                <div class="scan-frame-corner top-left"></div>
+                <div class="scan-frame-corner top-right"></div>
+                <div class="scan-frame-corner bottom-left"></div>
+                <div class="scan-frame-corner bottom-right"></div>
+                <div class="scan-line"></div>
+            </div>
+            <div class="scan-hint">将 PromptPay 二维码放入框内</div>
+        </div>
+
+        <div class="scan-footer">
+            <button class="upload-btn" onclick="uploadImage()">
+                <span>📁</span>
+                <span>从相册选择图片</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Fallback Screen (no camera support) -->
+    <div class="fallback-container" id="fallbackScreen" style="display: none;">
+        <div class="fallback-icon">📷</div>
+        <div class="fallback-title">无法访问相机</div>
+        <div class="fallback-desc">
+            您的浏览器不支持相机访问，或相机权限被拒绝。<br>
+            请使用图片上传功能。
+        </div>
+        <button class="btn btn-primary btn-large" onclick="uploadImageFallback()" style="width: 100%; max-width: 300px;">
+            从相册选择图片
+        </button>
+        <a href="index.html" style="color: var(--text-secondary); font-size: 14px; margin-top: 24px; text-decoration: none;">
+            返回首页
+        </a>
+    </div>
+
+    <script src="js/promptpay-parser.js"></script>
+    <script>
+        let html5QrCode = null;
+        let isScanning = false;
+        let hasFlash = false;
+        let flashOn = false;
+
+        // Check browser support
+        function checkSupport() {
+            return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+        }
+
+        // Request camera permission
+        async function requestCameraPermission() {
+            // Haptic feedback
+            if (navigator.vibrate) navigator.vibrate(10);
+
+            if (!checkSupport()) {
+                showFallback();
+                return;
+            }
+
+            try {
+                // Show scanner screen
+                document.getElementById('permissionScreen').style.display = 'none';
+                document.getElementById('scannerScreen').style.display = 'block';
+
+                // Initialize scanner
+                await startScanning();
+            } catch (error) {
+                console.error('Camera permission denied:', error);
+                showFallback();
+            }
+        }
+
+        // Start scanning
+        async function startScanning() {
+            html5QrCode = new Html5Qrcode("qr-reader");
+
+            const config = {
+                fps: 10,
+                qrbox: { width: 250, height: 250 },
+                aspectRatio: 1.0,
+                showTorchButtonIfSupported: false,
+                showZoomSliderIfSupported: false,
+                defaultZoomValueIfSupported: 1.5
+            };
+
+            try {
+                await html5QrCode.start(
+                    { facingMode: "environment" },
+                    config,
+                    onScanSuccess,
+                    onScanFailure
+                );
+                isScanning = true;
+
+                // Check flash support
+                const capabilities = html5QrCode.getRunningTrackCapabilities();
+                if (capabilities && capabilities.torch) {
+                    hasFlash = true;
+                    document.getElementById('flashBtn').style.visibility = 'visible';
+                }
+
+                // Hide the default html5-qrcode UI elements
+                const defaultUI = document.querySelector('#qr-reader__dashboard_section');
+                if (defaultUI) defaultUI.style.display = 'none';
+                const defaultHeader = document.querySelector('#qr-reader__header_message');
+                if (defaultHeader) defaultHeader.style.display = 'none';
+            } catch (err) {
+                console.error('Unable to start scanning:', err);
+                showFallback();
+            }
+        }
+
+        // Scan success handler
+        function onScanSuccess(decodedText) {
+            // Haptic feedback
+            if (navigator.vibrate) navigator.vibrate([50, 30, 100]);
+
+            // Stop scanning
+            if (html5QrCode && isScanning) {
+                html5QrCode.stop().then(() => {
+                    isScanning = false;
+                    processQRCode(decodedText);
+                }).catch(console.error);
+            }
+        }
+
+        // Scan failure handler (silent)
+        function onScanFailure(error) {
+            // Silent - keep scanning
+        }
+
+        // Process QR code
+        function processQRCode(qrData) {
+            console.log('QR Data:', qrData);
+
+            // Parse PromptPay QR
+            const result = parsePromptPayQR(qrData);
+
+            if (result.success) {
+                // Save data to localStorage
+                localStorage.setItem('scannedQR', JSON.stringify(result.data));
+
+                // Extract merchant info
+                if (result.data.merchantName) {
+                    localStorage.setItem('merchantName', result.data.merchantName);
+                } else if (result.data.accountId) {
+                    // Format phone number as merchant display
+                    const phone = result.data.accountId;
+                    if (result.data.accountType === 'phone') {
+                        localStorage.setItem('merchantName', formatPhoneNumber(phone));
+                    } else {
+                        localStorage.setItem('merchantName', 'PromptPay 商户');
+                    }
+                }
+
+                // If amount is specified in QR, save it
+                if (result.data.amount && result.data.amount > 0) {
+                    localStorage.setItem('amountTHB', result.data.amount.toString());
+                    localStorage.setItem('amountFromQR', 'true');
+                } else {
+                    localStorage.removeItem('amountFromQR');
+                }
+
+                // Navigate to amount page
+                window.location.href = 'amount.html';
+            } else {
+                // Not a valid PromptPay QR
+                alert('无法识别此二维码\n请扫描有效的 PromptPay 二维码');
+
+                // Restart scanning
+                if (html5QrCode) {
+                    startScanning();
+                }
+            }
+        }
+
+        // Format phone number for display
+        function formatPhoneNumber(phone) {
+            // Thai phone format: 0XX-XXX-XXXX
+            if (phone.length === 10 && phone.startsWith('0')) {
+                return phone.substring(0, 3) + '-' + phone.substring(3, 6) + '-' + phone.substring(6);
+            }
+            return phone;
+        }
+
+        // Toggle flash
+        async function toggleFlash() {
+            if (!hasFlash || !html5QrCode) return;
+
+            // Haptic feedback
+            if (navigator.vibrate) navigator.vibrate(5);
+
+            try {
+                flashOn = !flashOn;
+                await html5QrCode.applyVideoConstraints({
+                    advanced: [{ torch: flashOn }]
+                });
+                document.getElementById('flashBtn').textContent = flashOn ? '🔦' : '🔦';
+                document.getElementById('flashBtn').style.background = flashOn
+                    ? 'rgba(255, 204, 0, 0.4)'
+                    : 'rgba(255,255,255,0.2)';
+            } catch (err) {
+                console.error('Flash toggle failed:', err);
+            }
+        }
+
+        // Upload image
+        function uploadImage() {
+            // Haptic feedback
+            if (navigator.vibrate) navigator.vibrate(10);
+
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.capture = 'environment';
+
+            input.onchange = async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                try {
+                    // Stop camera if running
+                    if (html5QrCode && isScanning) {
+                        await html5QrCode.stop();
+                        isScanning = false;
+                    }
+
+                    // Initialize if needed
+                    if (!html5QrCode) {
+                        html5QrCode = new Html5Qrcode("qr-reader");
+                    }
+
+                    const result = await html5QrCode.scanFile(file, true);
+                    processQRCode(result);
+                } catch (err) {
+                    console.error('Image scan failed:', err);
+                    alert('未能识别图片中的二维码\n请确保图片清晰且包含有效的二维码');
+
+                    // Restart scanning if was scanning
+                    if (document.getElementById('scannerScreen').style.display !== 'none') {
+                        startScanning();
+                    }
+                }
+            };
+
+            input.click();
+        }
+
+        // Upload image (fallback version)
+        function uploadImageFallback() {
+            // Haptic feedback
+            if (navigator.vibrate) navigator.vibrate(10);
+
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+
+            input.onchange = async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                try {
+                    if (!html5QrCode) {
+                        html5QrCode = new Html5Qrcode("qr-reader-fallback", { verbose: false });
+                    }
+
+                    const result = await html5QrCode.scanFile(file, true);
+                    processQRCode(result);
+                } catch (err) {
+                    console.error('Image scan failed:', err);
+                    alert('未能识别图片中的二维码\n请确保图片清晰且包含有效的二维码');
+                }
+            };
+
+            input.click();
+        }
+
+        // Show fallback screen
+        function showFallback() {
+            document.getElementById('permissionScreen').style.display = 'none';
+            document.getElementById('scannerScreen').style.display = 'none';
+            document.getElementById('fallbackScreen').style.display = 'flex';
+        }
+
+        // Go back
+        function goBack() {
+            // Haptic feedback
+            if (navigator.vibrate) navigator.vibrate(5);
+
+            // Stop scanning
+            if (html5QrCode && isScanning) {
+                html5QrCode.stop().catch(console.error);
+            }
+
+            window.location.href = 'index.html';
+        }
+
+        // Hidden element for fallback scanning
+        document.body.insertAdjacentHTML('beforeend', '<div id="qr-reader-fallback" style="display:none;"></div>');
+
+        // Check if iOS Safari (needs user interaction)
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        if (isIOS) {
+            // Show permission screen by default on iOS
+            document.getElementById('permissionScreen').style.display = 'flex';
+        }
+    </script>
+</body>
+</html>

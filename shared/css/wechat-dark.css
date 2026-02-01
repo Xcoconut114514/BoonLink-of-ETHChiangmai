@@ -1,0 +1,601 @@
+/**
+ * BoonLink Payment - WeChat Pay Dark Theme
+ * Mimics WeChat Pay UI exactly
+ */
+
+:root {
+  /* Dark Background */
+  --bg-primary: #191919;
+  --bg-secondary: #2C2C2C;
+  --bg-card: #3A3A3A;
+  --bg-input: #4A4A4A;
+  --bg-keyboard: #2C2C2C;
+  --bg-key: #4A4A4A;
+  --bg-key-active: #5A5A5A;
+
+  /* Text Colors */
+  --text-primary: #FFFFFF;
+  --text-secondary: #999999;
+  --text-tertiary: #666666;
+
+  /* Accent Colors */
+  --accent-green: #07C160;
+  --accent-green-light: #10D070;
+  --accent-orange: #FA9D3B;
+  --accent-red: #FA5151;
+
+  /* Border */
+  --border-color: #3A3A3A;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow-x: hidden;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', sans-serif;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.4;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ============================================================================
+   App Layout
+   ============================================================================ */
+.app-container {
+  max-width: 428px;
+  min-height: 100vh;
+  margin: 0 auto;
+  background-color: var(--bg-primary);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header - WeChat Style */
+.wc-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--bg-primary);
+}
+
+.wc-header-btn {
+  width: 40px;
+  height: 40px;
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.wc-header-title {
+  font-size: 17px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+/* ============================================================================
+   Merchant Section
+   ============================================================================ */
+.wc-merchant {
+  padding: 20px 20px 24px;
+}
+
+.wc-merchant-label {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+.wc-merchant-name {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* ============================================================================
+   Amount Card
+   ============================================================================ */
+.wc-amount-card {
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  margin: 0 16px;
+  padding: 20px;
+}
+
+.wc-amount-label {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+}
+
+.wc-amount-row {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.wc-amount-currency {
+  font-size: 24px;
+  font-weight: 300;
+  color: var(--text-primary);
+}
+
+.wc-amount-value {
+  font-size: 48px;
+  font-weight: 300;
+  color: var(--text-primary);
+  letter-spacing: -2px;
+  min-width: 60px;
+}
+
+.wc-amount-cursor {
+  display: inline-block;
+  width: 2px;
+  height: 42px;
+  background: var(--accent-green);
+  animation: blink 1s infinite;
+  margin-left: 2px;
+  vertical-align: middle;
+}
+
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+.wc-amount-line {
+  height: 1px;
+  background: var(--border-color);
+  margin: 16px 0;
+}
+
+.wc-amount-hint {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.wc-amount-hint .crypto {
+  color: var(--accent-green);
+}
+
+/* ============================================================================
+   Branding
+   ============================================================================ */
+.wc-brand {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+}
+
+.wc-brand-icon {
+  width: 32px;
+  height: 32px;
+  margin-bottom: 8px;
+}
+
+.wc-brand-text {
+  font-size: 14px;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.wc-brand-text svg {
+  color: var(--accent-green);
+}
+
+/* ============================================================================
+   Numpad - 4 Column Layout
+   ============================================================================ */
+.wc-numpad {
+  background: var(--bg-keyboard);
+  padding: 8px;
+  padding-bottom: calc(8px + env(safe-area-inset-bottom, 0));
+}
+
+.wc-numpad-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(4, 52px);
+  gap: 6px;
+}
+
+.wc-key {
+  background: var(--bg-key);
+  border: none;
+  border-radius: 6px;
+  font-size: 22px;
+  font-weight: 400;
+  color: var(--text-primary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.1s;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.wc-key:active {
+  background: var(--bg-key-active);
+}
+
+.wc-key-zero {
+  grid-column: span 2;
+}
+
+.wc-key-delete {
+  background: var(--bg-key);
+}
+
+.wc-key-delete svg {
+  width: 24px;
+  height: 24px;
+  color: var(--text-primary);
+}
+
+.wc-key-pay {
+  grid-column: 4;
+  grid-row: 2 / 5;
+  background: var(--accent-green);
+  color: white;
+  font-size: 18px;
+  font-weight: 500;
+  border-radius: 6px;
+}
+
+.wc-key-pay:active {
+  background: var(--accent-green-light);
+}
+
+.wc-key-pay:disabled {
+  background: var(--bg-key);
+  color: var(--text-tertiary);
+  cursor: not-allowed;
+}
+
+/* ============================================================================
+   Success Page
+   ============================================================================ */
+.wc-success-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.wc-success-header {
+  text-align: center;
+  padding: 48px 20px 24px;
+}
+
+.wc-success-icon {
+  width: 64px;
+  height: 64px;
+  background: var(--accent-green);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+}
+
+.wc-success-icon svg {
+  width: 36px;
+  height: 36px;
+  color: white;
+}
+
+.wc-success-title {
+  font-size: 18px;
+  color: var(--accent-green);
+  font-weight: 500;
+  margin-bottom: 24px;
+}
+
+.wc-success-merchant {
+  font-size: 18px;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+.wc-success-amount {
+  font-size: 48px;
+  font-weight: 300;
+  color: var(--text-primary);
+}
+
+.wc-success-amount .currency {
+  font-size: 24px;
+  margin-right: 4px;
+}
+
+/* Details List */
+.wc-details {
+  padding: 24px 20px;
+}
+
+.wc-detail-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 0;
+}
+
+.wc-detail-label {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.wc-detail-value {
+  font-size: 14px;
+  color: var(--text-secondary);
+  text-align: right;
+}
+
+.wc-detail-value.highlight {
+  color: var(--accent-orange);
+}
+
+/* Complete Button */
+.wc-complete-btn {
+  margin: auto 20px 24px;
+  padding: 14px;
+  background: var(--bg-card);
+  border: none;
+  border-radius: 8px;
+  font-size: 17px;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.wc-complete-btn:active {
+  background: var(--bg-input);
+}
+
+/* Hint */
+.wc-hint {
+  text-align: center;
+  padding: 16px 20px 32px;
+  font-size: 13px;
+  color: var(--accent-orange);
+}
+
+.wc-hint-icon {
+  margin-right: 6px;
+}
+
+/* ============================================================================
+   Receipt Page (for merchant)
+   ============================================================================ */
+.wc-receipt-banner {
+  background: var(--accent-green);
+  color: white;
+  text-align: center;
+  padding: 14px 20px;
+  margin: 16px;
+  border-radius: 8px;
+  font-size: 15px;
+}
+
+.wc-receipt-card {
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  margin: 0 16px;
+  padding: 24px 20px;
+  text-align: center;
+}
+
+.wc-receipt-icon {
+  width: 56px;
+  height: 56px;
+  background: var(--accent-green);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+}
+
+.wc-receipt-icon svg {
+  width: 32px;
+  height: 32px;
+  color: white;
+}
+
+.wc-receipt-status {
+  font-size: 18px;
+  color: var(--text-primary);
+  margin-bottom: 16px;
+}
+
+.wc-receipt-amount {
+  font-size: 42px;
+  font-weight: 300;
+  color: var(--text-primary);
+  margin-bottom: 20px;
+}
+
+.wc-receipt-amount .currency {
+  font-size: 20px;
+}
+
+.wc-receipt-details {
+  border-top: 1px dashed var(--border-color);
+  padding-top: 16px;
+  text-align: left;
+}
+
+.wc-receipt-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  font-size: 13px;
+}
+
+.wc-receipt-row .label {
+  color: var(--text-secondary);
+}
+
+.wc-receipt-row .value {
+  color: var(--text-secondary);
+  text-align: right;
+  max-width: 60%;
+  word-break: break-all;
+}
+
+/* Close Button */
+.wc-close-btn {
+  margin: 24px 16px;
+  padding: 14px;
+  background: var(--bg-card);
+  border: none;
+  border-radius: 8px;
+  font-size: 17px;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+/* Footer Brand */
+.wc-footer-brand {
+  text-align: center;
+  padding: 20px;
+  font-size: 14px;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+/* ============================================================================
+   Signing Modal
+   ============================================================================ */
+.wc-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.wc-modal-overlay.show {
+  display: flex;
+}
+
+.wc-modal {
+  width: 90%;
+  max-width: 320px;
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.wc-modal-header {
+  padding: 20px 20px 12px;
+  text-align: center;
+}
+
+.wc-modal-title {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.wc-modal-body {
+  padding: 0 20px 20px;
+  text-align: center;
+}
+
+.wc-modal-amount {
+  font-size: 32px;
+  font-weight: 300;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.wc-modal-merchant {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+}
+
+.wc-modal-info {
+  font-size: 13px;
+  color: var(--text-tertiary);
+  line-height: 1.5;
+}
+
+.wc-modal-footer {
+  display: flex;
+  border-top: 1px solid var(--border-color);
+}
+
+.wc-modal-btn {
+  flex: 1;
+  padding: 14px;
+  background: none;
+  border: none;
+  font-size: 17px;
+  cursor: pointer;
+}
+
+.wc-modal-btn-cancel {
+  color: var(--text-secondary);
+  border-right: 1px solid var(--border-color);
+}
+
+.wc-modal-btn-confirm {
+  color: var(--accent-green);
+  font-weight: 500;
+}
+
+/* Loading */
+.wc-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+}
+
+.wc-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--border-color);
+  border-top-color: var(--accent-green);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.wc-loading-text {
+  margin-top: 16px;
+  font-size: 14px;
+  color: var(--text-secondary);
+}

@@ -394,3 +394,133 @@ window.BoonLinkWallet = {
     WALLET_PROVIDERS,
     BSC_CONFIG
 };
+
+// ============================================================================
+// Real Transaction Functions
+// ============================================================================
+
+// Merchant wallet address (this would be the PromptPay recipient's crypto address)
+// In production, this should be fetched from backend based on PromptPay ID
+const MERCHANT_WALLET = '0x742d35Cc6634C0532925a3b844Bc9e7595f0aB3c'; // Demo address
+
+// Sign and send real ERC20 transfer
+async function signAndSendPayment(paymentData) {
+    if (!walletState.isConnected) {
+        throw new Error('钱包未连接');
+    }
+
+    const { amount, token, merchantId, merchantName, thbAmount } = paymentData;
+    const tokenConfig = BSC_CONFIG.tokens[token];
+    if (!tokenConfig) {
+        throw new Error('不支持的代币');
+    }
+
+    const provider = walletState.provider || window.ethereum;
+
+    // Ensure BSC network
+    await ensureBSCNetwork(provider);
+
+    // Convert amount to wei (18 decimals for BSC tokens)
+    const amountInWei = BigInt(Math.floor(parseFloat(amount) * Math.pow(10, tokenConfig.decimals)));
+    const amountHex = '0x' + amountInWei.toString(16);
+
+    // ERC20 transfer function signature: transfer(address to, uint256 amount)
+    // Function selector: 0xa9059cbb
+    const toAddress = MERCHANT_WALLET.slice(2).padStart(64, '0');
+    const amountPadded = amountInWei.toString(16).padStart(64, '0');
+    const data = '0xa9059cbb' + toAddress + amountPadded;
+
+    // Estimate gas
+    let gasEstimate;
+    try {
+        gasEstimate = await provider.request({
+            method: 'eth_estimateGas',
+            params: [{
+                from: walletState.address,
+                to: tokenConfig.address,
+                data: data
+            }]
+        });
+    } catch (e) {
+        console.error('Gas estimation failed:', e);
+        gasEstimate = '0x15F90'; // Default 90000
+    }
+
+    // Get gas price
+    const gasPrice = await provider.request({
+        method: 'eth_gasPrice'
+    });
+
+    // Build transaction
+    const tx = {
+        from: walletState.address,
+        to: tokenConfig.address,
+        data: data,
+        gas: gasEstimate,
+        gasPrice: gasPrice
+    };
+
+    // Send transaction - this will trigger wallet signature popup
+    const txHash = await provider.request({
+        method: 'eth_sendTransaction',
+        params: [tx]
+    });
+
+    console.log('Transaction sent:', txHash);
+
+    // Wait for confirmation (optional, for better UX)
+    // In production, you'd want to poll for receipt
+    
+    return txHash;
+}
+
+// Check token allowance (for future use with approve pattern)
+async function checkAllowance(tokenSymbol, spender) {
+    if (!walletState.isConnected) throw new Error('钱包未连接');
+    
+    const token = BSC_CONFIG.tokens[tokenSymbol];
+    if (!token) throw new Error('不支持的代币');
+
+    const provider = walletState.provider || window.ethereum;
+
+    // allowance(address owner, address spender)
+    const ownerPadded = walletState.address.slice(2).padStart(64, '0');
+    const spenderPadded = spender.slice(2).padStart(64, '0');
+    const data = '0xdd62ed3e' + ownerPadded + spenderPadded;
+
+    const result = await provider.request({
+        method: 'eth_call',
+        params: [{
+            to: token.address,
+            data: data
+        }, 'latest']
+    });
+
+    return BigInt(result);
+}
+
+// Approve token spending (for future use)
+async function approveToken(tokenSymbol, spender, amount) {
+    if (!walletState.isConnected) throw new Error('钱包未连接');
+    
+    const token = BSC_CONFIG.tokens[tokenSymbol];
+    if (!token) throw new Error('不支持的代币');
+
+    const provider = walletState.provider || window.ethereum;
+
+    // approve(address spender, uint256 amount)
+    const spenderPadded = spender.slice(2).padStart(64, '0');
+    const amountPadded = BigInt(amount).toString(16).padStart(64, '0');
+    const data = '0x095ea7b3' + spenderPadded + amountPadded;
+
+    const tx = {
+        from: walletState.address,
+        to: token.address,
+        data: data
+    };
+
+    return await provider.request({
+        method: 'eth_sendTransaction',
+        params: [tx]
+    });
+}

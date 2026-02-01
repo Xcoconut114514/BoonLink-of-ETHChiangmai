@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#191919">
+    <title>收款凭证 - BoonLink</title>
+    <link rel="stylesheet" href="/shared/css/wechat-dark.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <div class="wc-header">
+            <button class="wc-header-btn" onclick="goBack()">✕</button>
+            <div class="wc-header-title">BoonLink 支付</div>
+            <button class="wc-header-btn">⋯</button>
+        </div>
+
+        <!-- Banner -->
+        <div class="wc-receipt-banner">
+            请向商家出示该页面以确认付款成功
+        </div>
+
+        <!-- Receipt Card -->
+        <div class="wc-receipt-card">
+            <div class="wc-receipt-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+            </div>
+            <div class="wc-receipt-status">ชำระเงินสำเร็จ</div>
+            <div class="wc-receipt-amount">
+                <span class="currency">THB</span><span id="thbAmount">60.00</span>
+            </div>
+            <div class="wc-receipt-details">
+                <div class="wc-receipt-row">
+                    <span class="label">ชื่อร้านค้า</span>
+                    <span class="value" id="merchantNameTH">K+ shop (COCNUN)</span>
+                </div>
+                <div class="wc-receipt-row">
+                    <span class="label">เวลาในการชำระเงิน</span>
+                    <span class="value" id="paymentTimeTH">2026-01-31 12:06:15</span>
+                </div>
+                <div class="wc-receipt-row">
+                    <span class="label">หมายเลขรายการ</span>
+                    <span class="value" id="txHashTH">0x1a2b...3c4d</span>
+                </div>
+                <div class="wc-receipt-row" style="border-top: 1px dashed var(--border-color); margin-top: 12px; padding-top: 12px;">
+                    <span class="label">商户名称</span>
+                    <span class="value" id="merchantNameCN">K+ shop (COCNUN)</span>
+                </div>
+                <div class="wc-receipt-row">
+                    <span class="label">支付时间</span>
+                    <span class="value" id="paymentTimeCN">2026-01-31 12:06:15</span>
+                </div>
+                <div class="wc-receipt-row">
+                    <span class="label">交易单号</span>
+                    <span class="value" id="txHashCN">0x1a2b...3c4d</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Close Button -->
+        <button class="wc-close-btn" onclick="closeReceipt()">关闭</button>
+
+        <!-- Footer Brand -->
+        <div class="wc-footer-brand">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#07C160" stroke-width="2">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                <path d="M9 12l2 2 4-4"/>
+            </svg>
+            BoonLink 支付
+        </div>
+    </div>
+
+    <script>
+        // Get payment info from localStorage
+        const merchantName = localStorage.getItem('merchantName') || 'PromptPay 商户';
+        const amountTHB = localStorage.getItem('amountTHB') || '0';
+        const txHash = localStorage.getItem('txHash') || '';
+        const paymentTime = localStorage.getItem('paymentTime') || new Date().toISOString();
+
+        // Format time
+        const time = new Date(paymentTime);
+        const formattedTime = `${time.getFullYear()}-${String(time.getMonth()+1).padStart(2,'0')}-${String(time.getDate()).padStart(2,'0')} ${String(time.getHours()).padStart(2,'0')}:${String(time.getMinutes()).padStart(2,'0')}:${String(time.getSeconds()).padStart(2,'0')}`;
+
+        // Format tx hash
+        const shortTxHash = txHash ? `${txHash.slice(0, 10)}...${txHash.slice(-8)}` : 'BL' + Date.now();
+
+        // Display info
+        document.getElementById('thbAmount').textContent = parseFloat(amountTHB).toFixed(2);
+        document.getElementById('merchantNameTH').textContent = merchantName;
+        document.getElementById('merchantNameCN').textContent = merchantName;
+        document.getElementById('paymentTimeTH').textContent = formattedTime;
+        document.getElementById('paymentTimeCN').textContent = formattedTime;
+        document.getElementById('txHashTH').textContent = shortTxHash;
+        document.getElementById('txHashCN').textContent = shortTxHash;
+
+        function goBack() {
+            window.location.href = '/customer/success.html';
+        }
+
+        function closeReceipt() {
+            // Clear payment data
+            localStorage.removeItem('txHash');
+            localStorage.removeItem('cryptoAmount');
+            localStorage.removeItem('amountTHB');
+            localStorage.removeItem('amountFromQR');
+            localStorage.removeItem('merchantName');
+            localStorage.removeItem('merchantId');
+            localStorage.removeItem('paymentTime');
+            localStorage.removeItem('paymentNote');
+            localStorage.removeItem('tokenSymbol');
+
+            // Go to home
+            window.location.href = '/customer/index.html';
+        }
+    </script>
+</body>
+</html>

@@ -2,6 +2,8 @@
 
 ![BoonLink Banner](shared/assets/logo.png)
 
+https://vimeo.com/1160853278?share=copy&fl=sv&fe=ci
+
 > **Hackathon Track:** Payment / Consumer Crypto / Real World Adoption
 
 **BoonLink** is a decentralized payment bridge designed to connect global crypto capital with the local real-world economy. It empowers digital nomads to spend crypto (USDT/ETH) directly at local street vendors by scanning standard **PromptPay** QR codes, while merchants receive real-time confirmations via their existing **LINE** accounts—no new hardware or learning curve required.

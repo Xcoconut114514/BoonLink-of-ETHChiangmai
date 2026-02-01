@@ -225,12 +225,6 @@
             <div class="note-arrow">›</div>
         </div>
 
-        <!-- Logo Section -->
-        <div class="amount-logo-section">
-            <img src="/shared/assets/logo.png" alt="BoonLink" class="amount-logo-image">
-            <div class="amount-logo-text">BoonLink</div>
-        </div>
-
         <!-- Note Modal -->
         <div class="modal-overlay" id="noteModal" onclick="closeNoteModal(event)">
             <div class="modal-content" onclick="event.stopPropagation()">
@@ -266,13 +260,26 @@
         </div>
 
         <!-- Spacer to push numpad to bottom -->
-        <div style="flex-grow: 1;"></div>
+        <div style="flex-grow: 1; min-height: 10px;"></div>
 
         <!-- Number Pad -->
         <div class="numpad-container" id="numpadContainer">
-            <div class="numpad-toggle" onclick="toggleNumpad()">
-                <span id="numpadToggleText">▼ 收起键盘</span>
+            <!-- Token Selection (horizontal) -->
+            <div class="token-selector">
+                <div class="token-chip selected" data-token="USDT" onclick="selectToken('USDT')">
+                    <span class="token-chip-icon">₮</span>
+                    <span class="token-chip-name">USDT</span>
+                </div>
+                <div class="token-chip" data-token="USDC" onclick="selectToken('USDC')">
+                    <span class="token-chip-icon">$</span>
+                    <span class="token-chip-name">USDC</span>
+                </div>
+                <div class="token-chip" data-token="ETH" onclick="selectToken('ETH')">
+                    <span class="token-chip-icon">◆</span>
+                    <span class="token-chip-name">ETH</span>
+                </div>
             </div>
+            
             <div class="numpad-grid" id="numpadGrid">
                 <button class="numpad-key" onclick="addDigit('1')">1</button>
                 <button class="numpad-key" onclick="addDigit('2')">2</button>
@@ -293,61 +300,78 @@
                     </svg>
                 </button>
             </div>
-            <button class="numpad-pay-btn" id="payButton" onclick="proceedToTokenSelection()" disabled>
-                <span>选择支付方式</span>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M5 12h14M12 5l7 7-7 7"/>
-                </svg>
+            <button class="numpad-pay-btn" id="payButton" onclick="proceedToPayment()" disabled>
+                <span id="payButtonText">确认支付</span>
             </button>
         </div>
     </div>
 
     <style>
-        .numpad-toggle {
-            text-align: center;
-            padding: 8px;
-            color: var(--text-secondary);
-            font-size: 13px;
+        /* Token selector chips */
+        .token-selector {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            padding: 12px 16px;
+            background: var(--bg-primary);
+        }
+        .token-chip {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            background: var(--bg-card);
+            border: 2px solid var(--border-color);
             cursor: pointer;
-            user-select: none;
+            transition: all 0.2s;
         }
-        .numpad-toggle:active {
-            background: var(--bg-input);
+        .token-chip:active {
+            transform: scale(0.95);
         }
-        .numpad-grid.hidden {
-            display: none;
+        .token-chip.selected {
+            border-color: var(--accent-green);
+            background: rgba(7, 193, 96, 0.1);
         }
-        .numpad-container.collapsed .numpad-grid {
-            display: none;
+        .token-chip-icon {
+            font-size: 16px;
+            font-weight: bold;
         }
-        .numpad-container.collapsed {
-            padding-bottom: 0;
+        .token-chip[data-token="USDT"] .token-chip-icon { color: #26A17B; }
+        .token-chip[data-token="USDC"] .token-chip-icon { color: #2775CA; }
+        .token-chip[data-token="ETH"] .token-chip-icon { color: #627EEA; }
+        .token-chip-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary);
         }
     </style>
 
     <script>
-        // Numpad visibility state
-        let isNumpadVisible = true;
+        // Selected token
+        let selectedToken = 'USDT';
+        
+        // Exchange rates (demo)
+        const RATES = {
+            USDT: 35.40,
+            USDC: 35.35,
+            ETH: 120000
+        };
 
-        function toggleNumpad() {
-            if (navigator.vibrate) {
-                navigator.vibrate(5);
-            }
-            isNumpadVisible = !isNumpadVisible;
-            const container = document.getElementById('numpadContainer');
-            const toggleText = document.getElementById('numpadToggleText');
+        function selectToken(token) {
+            if (navigator.vibrate) navigator.vibrate(5);
             
-            if (isNumpadVisible) {
-                container.classList.remove('collapsed');
-                toggleText.textContent = '▼ 收起键盘';
-            } else {
-                container.classList.add('collapsed');
-                toggleText.textContent = '▲ 展开键盘';
-            }
+            selectedToken = token;
+            
+            // Update UI
+            document.querySelectorAll('.token-chip').forEach(chip => {
+                chip.classList.remove('selected');
+            });
+            document.querySelector(`[data-token="${token}"]`).classList.add('selected');
+            
+            // Update crypto hint
+            updateDisplay();
         }
-
-        // USDT rate for hint
-        const USDT_RATE = 35.40;
 
         // Get merchant info from localStorage
         const merchantName = localStorage.getItem('merchantName') || 'PromptPay 商户';
@@ -374,21 +398,33 @@
             const formatted = formatAmount(currentAmount);
             display.textContent = formatted;
 
-            // Update crypto hint
+            // Update crypto hint based on selected token
             const amount = parseFloat(currentAmount) || 0;
-            const cryptoAmount = (amount / USDT_RATE).toFixed(2);
+            const rate = RATES[selectedToken];
+            let cryptoAmount;
+            
+            if (selectedToken === 'ETH') {
+                cryptoAmount = (amount / rate).toFixed(6);
+            } else {
+                cryptoAmount = (amount / rate).toFixed(2);
+            }
+            
             if (!amountFromQR) {
-                document.getElementById('cryptoHint').textContent = `≈ ${cryptoAmount} USDT`;
+                document.getElementById('cryptoHint').textContent = `≈ ${cryptoAmount} ${selectedToken}`;
             }
 
-            // Enable/disable pay button
+            // Enable/disable pay button and update text
             const payButton = document.getElementById('payButton');
+            const payButtonText = document.getElementById('payButtonText');
+            
             if (amount > 0) {
                 payButton.disabled = false;
                 payButton.classList.add('active');
+                payButtonText.textContent = `确认支付 ${cryptoAmount} ${selectedToken}`;
             } else {
                 payButton.disabled = true;
                 payButton.classList.remove('active');
+                payButtonText.textContent = '确认支付';
             }
         }
 
@@ -458,7 +494,7 @@
             updateDisplay();
         }
 
-        function proceedToTokenSelection() {
+        function proceedToPayment() {
             if (parseFloat(currentAmount) <= 0) return;
 
             // Haptic feedback
@@ -466,13 +502,35 @@
                 navigator.vibrate(10);
             }
 
+            const amount = parseFloat(currentAmount);
+            const rate = RATES[selectedToken];
+            let cryptoAmount;
+            
+            if (selectedToken === 'ETH') {
+                cryptoAmount = (amount / rate).toFixed(6);
+            } else {
+                cryptoAmount = (amount / rate).toFixed(2);
+            }
+
             // Save data
             localStorage.setItem('merchantName', merchantName);
             localStorage.setItem('amountTHB', currentAmount);
             localStorage.setItem('paymentNote', paymentNote);
+            localStorage.setItem('selectedToken', selectedToken);
+            localStorage.setItem('amountCrypto', cryptoAmount);
+            localStorage.setItem('exchangeRate', rate.toString());
 
-            // Navigate to token selection
-            window.location.href = '/customer/select-token.html';
+            // Show loading on button
+            const payButton = document.getElementById('payButton');
+            const payButtonText = document.getElementById('payButtonText');
+            payButtonText.textContent = '处理中...';
+            payButton.disabled = true;
+            payButton.style.opacity = '0.8';
+
+            // Navigate to success page after delay
+            setTimeout(() => {
+                window.location.href = '/customer/success.html';
+            }, 1000);
         }
 
         function goBack() {

@@ -53,27 +53,22 @@
             color: var(--text-tertiary);
         }
 
-        /* Modal - GPU accelerated */
+        /* Modal - no animation for performance */
         .modal-overlay {
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0, 0, 0, 0);
-            display: flex;
+            background: rgba(0, 0, 0, 0.4);
+            display: none;
             align-items: flex-end;
             justify-content: center;
             z-index: 1000;
-            visibility: hidden;
-            transition: background 0.2s ease-out, visibility 0s linear 0.2s;
-            will-change: background;
         }
 
         .modal-overlay.show {
-            visibility: visible;
-            background: rgba(0, 0, 0, 0.4);
-            transition: background 0.2s ease-out, visibility 0s linear 0s;
+            display: flex;
         }
 
         .modal-content {
@@ -81,13 +76,6 @@
             max-width: 428px;
             background: var(--bg-card);
             border-radius: 16px 16px 0 0;
-            transform: translateY(100%);
-            transition: transform 0.2s ease-out;
-            will-change: transform;
-        }
-
-        .modal-overlay.show .modal-content {
-            transform: translateY(0);
         }
 
         .modal-header {
@@ -626,20 +614,13 @@
 
         // Note Modal Functions
         function openNoteModal() {
-            if (navigator.vibrate) navigator.vibrate(5);
-            const modal = document.getElementById('noteModal');
-            modal.classList.add('show');
+            document.getElementById('noteModal').classList.add('show');
             document.getElementById('noteInput').value = paymentNote;
             updateCharCount();
-            // Delay focus to avoid animation jank
-            setTimeout(() => {
-                document.getElementById('noteInput').focus();
-            }, 200);
         }
 
         function closeNoteModal(event) {
             if (event && event.target !== document.getElementById('noteModal')) return;
-            document.getElementById('noteInput').blur();
             document.getElementById('noteModal').classList.remove('show');
         }
 

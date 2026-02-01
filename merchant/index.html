@@ -82,59 +82,6 @@
             color: #FF9500;
         }
         
-        /* Voice Banner */
-        .voice-banner {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin: 0 16px 16px;
-            padding: 16px;
-            background: linear-gradient(135deg, #1a2a1a 0%, #0d1a0d 100%);
-            border: 2px solid #07C160;
-            border-radius: 12px;
-            cursor: pointer;
-            animation: pulse 2s infinite;
-        }
-        .voice-banner:active {
-            transform: scale(0.98);
-        }
-        @keyframes pulse {
-            0%, 100% { box-shadow: 0 0 0 0 rgba(7, 193, 96, 0.4); }
-            50% { box-shadow: 0 0 0 10px rgba(7, 193, 96, 0); }
-        }
-        .voice-banner-icon {
-            font-size: 32px;
-        }
-        .voice-banner-text {
-            flex: 1;
-        }
-        .voice-banner-title {
-            font-size: 16px;
-            font-weight: 600;
-            color: #07C160;
-        }
-        .voice-banner-desc {
-            font-size: 12px;
-            color: var(--text-secondary);
-            margin-top: 2px;
-        }
-        .voice-banner-btn {
-            padding: 8px 16px;
-            background: #07C160;
-            color: white;
-            font-weight: 600;
-            border-radius: 8px;
-        }
-        .voice-status {
-            text-align: center;
-            padding: 10px 16px;
-            margin: 0 16px 16px;
-            background: rgba(7, 193, 96, 0.1);
-            border-radius: 8px;
-            font-size: 13px;
-            color: #07C160;
-        }
-        
         /* Stats Card */
         .stats-card {
             margin: 0 16px 16px;
@@ -310,21 +257,6 @@
             <div class="home-logo-text">BoonLink</div>
             <div class="home-logo-sub">商家收款</div>
             <div class="home-logo-badge">🏪 Merchant Portal</div>
-        </div>
-
-        <!-- Voice Enable Banner -->
-        <div id="voiceBanner" class="voice-banner" onclick="enableVoice()">
-            <div class="voice-banner-icon">🔊</div>
-            <div class="voice-banner-text">
-                <div class="voice-banner-title">点击开启语音播报</div>
-                <div class="voice-banner-desc">收款到账将自动播报泰语语音</div>
-            </div>
-            <div class="voice-banner-btn">开启</div>
-        </div>
-
-        <!-- Voice Status (shown after enabled) -->
-        <div id="voiceStatus" class="voice-status" style="display: none;">
-            <span>🔊 语音已开启 · 监听中...</span>
         </div>
 
         <!-- Stats Card -->
@@ -535,59 +467,6 @@
         }
         
         // ============================================
-        // Voice Enable - Required for browser autoplay policy
-        // ============================================
-        let voiceEnabled = false;
-        
-        function enableVoice() {
-            // Play a test sound to unlock audio
-            if ('speechSynthesis' in window) {
-                const testUtterance = new SpeechSynthesisUtterance('');
-                testUtterance.volume = 0;
-                window.speechSynthesis.speak(testUtterance);
-            }
-            
-            voiceEnabled = true;
-            
-            // Hide banner, show status
-            document.getElementById('voiceBanner').style.display = 'none';
-            document.getElementById('voiceStatus').style.display = 'block';
-            
-            // Play confirmation in Thai
-            setTimeout(() => {
-                playTestVoice();
-            }, 300);
-            
-            console.log('✅ Voice enabled!');
-        }
-        
-        async function playTestVoice() {
-            if (!('speechSynthesis' in window)) return;
-            
-            let voices = window.speechSynthesis.getVoices();
-            if (voices.length === 0) {
-                await new Promise(resolve => {
-                    window.speechSynthesis.onvoiceschanged = () => {
-                        voices = window.speechSynthesis.getVoices();
-                        resolve();
-                    };
-                    setTimeout(resolve, 500);
-                });
-            }
-            
-            const utterance = new SpeechSynthesisUtterance('BoonLink พร้อมรับเงิน');
-            utterance.lang = 'th-TH';
-            utterance.rate = 0.9;
-            utterance.volume = 1.0;
-            
-            const thaiVoice = voices.find(v => v.lang.startsWith('th'));
-            if (thaiVoice) utterance.voice = thaiVoice;
-            
-            window.speechSynthesis.cancel();
-            window.speechSynthesis.speak(utterance);
-        }
-        
-        // ============================================
         // Blockchain Wallet Monitor - Watch for REAL on-chain payments
         // Monitors 0x6778404839E5D817c35ba72Fa5cD45a2716d9905 for transfers
         // ============================================
@@ -684,10 +563,6 @@
         
         // Thai voice for blockchain payments: "BoonLink รับเงินแล้ว X บาท"
         async function playBlockchainVoice(amountTHB, token) {
-            if (!voiceEnabled) {
-                console.log('⚠️ Voice not enabled yet - user needs to tap the banner first');
-                return;
-            }
             if (!('speechSynthesis' in window)) return;
             
             // Wait for voices

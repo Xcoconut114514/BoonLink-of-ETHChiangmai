@@ -11,11 +11,11 @@
         .note-input-card {
             display: flex;
             align-items: center;
-            gap: 12px;
-            margin: 0 16px 16px;
-            padding: 14px 16px;
+            gap: 10px;
+            margin: 0 12px 10px;
+            padding: 10px 12px;
             background: var(--bg-card);
-            border-radius: 12px;
+            border-radius: 10px;
             box-shadow: var(--shadow-card);
             cursor: pointer;
             transition: background 0.2s;
@@ -26,7 +26,7 @@
         }
 
         .note-icon {
-            font-size: 20px;
+            font-size: 16px;
         }
 
         .note-content {
@@ -34,13 +34,13 @@
         }
 
         .note-label {
-            font-size: 13px;
+            font-size: 11px;
             color: var(--text-secondary);
-            margin-bottom: 2px;
+            margin-bottom: 1px;
         }
 
         .note-value {
-            font-size: 15px;
+            font-size: 13px;
             color: var(--text-tertiary);
         }
 
@@ -204,7 +204,7 @@
         </div>
 
         <!-- Amount Display Card -->
-        <div class="card" style="margin: 20px 16px;">
+        <div class="card" style="margin: 8px 12px; padding: 12px;">
             <div class="amount-input-section">
                 <div class="amount-currency-label">THB</div>
                 <div class="amount-value-large" id="amountDisplay">0</div>
@@ -317,21 +317,21 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 8px 0 4px;
+            padding: 4px 0 2px;
             cursor: pointer;
             -webkit-tap-highlight-color: transparent;
         }
         .handle-bar {
-            width: 36px;
-            height: 4px;
+            width: 32px;
+            height: 3px;
             background: var(--text-tertiary);
             border-radius: 2px;
             opacity: 0.5;
         }
         .handle-hint {
-            font-size: 11px;
+            font-size: 10px;
             color: var(--text-tertiary);
-            margin-top: 4px;
+            margin-top: 2px;
             transition: opacity 0.2s;
         }
         
@@ -341,10 +341,10 @@
             display: none;
         }
         .numpad-container.collapsed {
-            padding-bottom: calc(8px + env(safe-area-inset-bottom, 0));
+            padding-bottom: calc(6px + env(safe-area-inset-bottom, 0));
         }
         .numpad-container.collapsed .numpad-pay-btn {
-            margin-top: 8px;
+            margin-top: 6px;
         }
         
         /* Transition */
@@ -359,13 +359,21 @@
         .token-selector {
             display: flex;
             justify-content: center;
-            gap: 12px;
-            padding: 8px 16px;
+            gap: 8px;
+            padding: 6px 12px;
             background: var(--bg-primary);
         }
         .token-chip {
             display: flex;
             align-items: center;
+            gap: 4px;
+            padding: 6px 12px;
+            border-radius: 16px;
+            background: var(--bg-card);
+            border: 1.5px solid var(--border-color);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
             gap: 6px;
             padding: 8px 16px;
             border-radius: 20px;
@@ -382,14 +390,14 @@
             background: rgba(7, 193, 96, 0.1);
         }
         .token-chip-icon {
-            font-size: 16px;
+            font-size: 13px;
             font-weight: bold;
         }
         .token-chip[data-token="USDT"] .token-chip-icon { color: #26A17B; }
         .token-chip[data-token="USDC"] .token-chip-icon { color: #2775CA; }
         .token-chip[data-token="ETH"] .token-chip-icon { color: #627EEA; }
         .token-chip-name {
-            font-size: 13px;
+            font-size: 11px;
             font-weight: 600;
             color: var(--text-primary);
         }

@@ -27,12 +27,27 @@
             font-weight: 600;
             color: var(--text-primary);
         }
-        .home-lang-btn {
-            background: none;
+        /* Language Switcher */
+        .lang-switcher {
+            display: flex;
+            gap: 4px;
+            background: var(--bg-card);
+            padding: 3px;
+            border-radius: 8px;
+        }
+        .lang-btn {
+            padding: 5px 10px;
             border: none;
-            color: var(--text-secondary);
-            font-size: 14px;
+            background: transparent;
+            color: var(--text-tertiary);
+            font-size: 12px;
+            border-radius: 6px;
             cursor: pointer;
+            transition: all 0.2s;
+        }
+        .lang-btn.active {
+            background: var(--accent-green);
+            color: white;
         }
         
         /* Logo Section */
@@ -425,7 +440,11 @@
         <div class="home-header">
             <div></div>
             <div class="home-header-title">BoonLink</div>
-            <button class="home-lang-btn" onclick="toggleLang()">中/EN</button>
+            <div class="lang-switcher">
+                <button class="lang-btn active" data-lang="zh" onclick="setLang('zh')">中</button>
+                <button class="lang-btn" data-lang="en" onclick="setLang('en')">EN</button>
+                <button class="lang-btn" data-lang="th" onclick="setLang('th')">ไทย</button>
+            </div>
         </div>
 
         <!-- Logo -->
@@ -751,9 +770,188 @@
             document.getElementById('limitModal').classList.remove('show');
         }
 
-        function toggleLang() {
-            alert('语言切换功能开发中');
+        // i18n translations
+        const i18n = {
+            zh: {
+                connectWallet: '连接钱包',
+                connectDesc: '使用自托管钱包进行安全加密支付',
+                privateKey: '私钥安全',
+                bscLowGas: 'BSC低Gas',
+                offlinePay: '离线支付',
+                connected: '已连接',
+                disconnect: '断开',
+                dailyLimit: '今日限额',
+                todayUsed: '今日已消费',
+                remaining: '剩余可用',
+                scanPay: '扫码支付',
+                scanPayDesc: '扫描 PromptPay 二维码付款',
+                payLimit: '支付限额',
+                payLimitDesc: '设置每日支付上限保护资产',
+                txHistory: '交易记录',
+                txHistoryDesc: '查看历史支付记录',
+                nonCustodial: 'Non-custodial · 私钥不离手',
+                limitTitle: '支付限额设置',
+                systemLimit: '系统安全限制',
+                perTxMax: '单笔上限',
+                dailyMax: '每日上限',
+                personalLimit: '个人限额（可选，不能超过系统上限）',
+                perTxLimit: '单笔限额',
+                perTxHint: '最高 ฿5,000，留空使用系统上限',
+                dailyLimitLabel: '每日限额',
+                dailyHint: '最高 ฿20,000，留空使用系统上限',
+                todayUsage: '今日已用',
+                cancel: '取消',
+                save: '保存'
+            },
+            en: {
+                connectWallet: 'Connect Wallet',
+                connectDesc: 'Secure crypto payments with self-custody wallet',
+                privateKey: 'Private Key Safe',
+                bscLowGas: 'BSC Low Gas',
+                offlinePay: 'Offline Pay',
+                connected: 'Connected',
+                disconnect: 'Disconnect',
+                dailyLimit: 'Daily Limit',
+                todayUsed: 'Spent Today',
+                remaining: 'Remaining',
+                scanPay: 'Scan to Pay',
+                scanPayDesc: 'Scan PromptPay QR code to pay',
+                payLimit: 'Payment Limits',
+                payLimitDesc: 'Set daily limits to protect assets',
+                txHistory: 'Transaction History',
+                txHistoryDesc: 'View past payment records',
+                nonCustodial: 'Non-custodial · Your keys, your coins',
+                limitTitle: 'Payment Limit Settings',
+                systemLimit: 'System Security Limits',
+                perTxMax: 'Per Transaction',
+                dailyMax: 'Daily Maximum',
+                personalLimit: 'Personal Limits (optional, cannot exceed system limits)',
+                perTxLimit: 'Per Transaction',
+                perTxHint: 'Max ฿5,000, leave empty for system limit',
+                dailyLimitLabel: 'Daily Limit',
+                dailyHint: 'Max ฿20,000, leave empty for system limit',
+                todayUsage: 'Used Today',
+                cancel: 'Cancel',
+                save: 'Save'
+            },
+            th: {
+                connectWallet: 'เชื่อมต่อกระเป๋า',
+                connectDesc: 'ชำระเงินคริปโตอย่างปลอดภัยด้วยกระเป๋าส่วนตัว',
+                privateKey: 'คีย์ส่วนตัวปลอดภัย',
+                bscLowGas: 'BSC Gas ต่ำ',
+                offlinePay: 'จ่ายออฟไลน์',
+                connected: 'เชื่อมต่อแล้ว',
+                disconnect: 'ยกเลิกการเชื่อมต่อ',
+                dailyLimit: 'วงเงินรายวัน',
+                todayUsed: 'ใช้ไปวันนี้',
+                remaining: 'คงเหลือ',
+                scanPay: 'สแกนจ่าย',
+                scanPayDesc: 'สแกน QR PromptPay เพื่อชำระเงิน',
+                payLimit: 'วงเงิน',
+                payLimitDesc: 'ตั้งวงเงินรายวันเพื่อปกป้องสินทรัพย์',
+                txHistory: 'ประวัติธุรกรรม',
+                txHistoryDesc: 'ดูรายการชำระเงินที่ผ่านมา',
+                nonCustodial: 'Non-custodial · คีย์ของคุณ เหรียญของคุณ',
+                limitTitle: 'ตั้งค่าวงเงิน',
+                systemLimit: 'วงเงินความปลอดภัยระบบ',
+                perTxMax: 'ต่อรายการ',
+                dailyMax: 'สูงสุดต่อวัน',
+                personalLimit: 'วงเงินส่วนตัว (ไม่เกินวงเงินระบบ)',
+                perTxLimit: 'ต่อรายการ',
+                perTxHint: 'สูงสุด ฿5,000 เว้นว่างใช้วงเงินระบบ',
+                dailyLimitLabel: 'วงเงินรายวัน',
+                dailyHint: 'สูงสุด ฿20,000 เว้นว่างใช้วงเงินระบบ',
+                todayUsage: 'ใช้ไปวันนี้',
+                cancel: 'ยกเลิก',
+                save: 'บันทึก'
+            }
+        };
+
+        let currentLang = localStorage.getItem('boonlink_lang') || 'zh';
+
+        function setLang(lang) {
+            currentLang = lang;
+            localStorage.setItem('boonlink_lang', lang);
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.lang === lang);
+            });
+            applyTranslations();
         }
+
+        function t(key) {
+            return i18n[currentLang]?.[key] || i18n['zh'][key] || key;
+        }
+
+        function applyTranslations() {
+            // Connect section
+            const connectTitle = document.querySelector('.connect-title');
+            const connectDesc = document.querySelector('.connect-desc');
+            if (connectTitle) connectTitle.textContent = t('connectWallet');
+            if (connectDesc) connectDesc.textContent = t('connectDesc');
+            
+            // Features
+            const features = document.querySelectorAll('.connect-feature');
+            if (features[0]) features[0].innerHTML = '🔐 ' + t('privateKey');
+            if (features[1]) features[1].innerHTML = '⚡ ' + t('bscLowGas');
+            if (features[2]) features[2].innerHTML = '📵 ' + t('offlinePay');
+            
+            // Wallet card
+            const walletLabel = document.querySelector('.wallet-label');
+            const disconnectBtn = document.querySelector('.wallet-disconnect');
+            if (walletLabel) walletLabel.textContent = t('connected');
+            if (disconnectBtn) disconnectBtn.textContent = t('disconnect');
+            
+            // Balance labels
+            const balanceLabels = document.querySelectorAll('.balance-label');
+            if (balanceLabels[0]) balanceLabels[0].textContent = t('dailyLimit');
+            if (balanceLabels[1]) balanceLabels[1].textContent = t('todayUsed');
+            if (balanceLabels[2]) balanceLabels[2].textContent = t('remaining');
+            
+            // Action buttons
+            const actionTitles = document.querySelectorAll('.action-btn-title');
+            const actionDescs = document.querySelectorAll('.action-btn-desc');
+            if (actionTitles[0]) actionTitles[0].textContent = t('scanPay');
+            if (actionDescs[0]) actionDescs[0].textContent = t('scanPayDesc');
+            if (actionTitles[1]) actionTitles[1].textContent = t('payLimit');
+            if (actionDescs[1]) actionDescs[1].textContent = t('payLimitDesc');
+            if (actionTitles[2]) actionTitles[2].textContent = t('txHistory');
+            if (actionDescs[2]) actionDescs[2].textContent = t('txHistoryDesc');
+            
+            // Footer
+            const footerText = document.querySelector('.home-footer-logo span');
+            if (footerText) footerText.textContent = t('nonCustodial');
+            
+            // Limit modal
+            const limitTitle = document.querySelector('.limit-modal-title');
+            const systemTitle = document.querySelector('.limit-system-title');
+            const systemRows = document.querySelectorAll('.limit-system-row span:first-child');
+            const personalTitle = document.querySelector('.limit-personal-title');
+            const inputLabels = document.querySelectorAll('.limit-input-label');
+            const inputHints = document.querySelectorAll('.limit-input-hint');
+            const usageLabel = document.querySelector('.limit-usage-label');
+            const limitBtns = document.querySelectorAll('.limit-btn');
+            
+            if (limitTitle) limitTitle.textContent = t('limitTitle');
+            if (systemTitle) systemTitle.innerHTML = '🔒 ' + t('systemLimit');
+            if (systemRows[0]) systemRows[0].textContent = t('perTxMax');
+            if (systemRows[1]) systemRows[1].textContent = t('dailyMax');
+            if (personalTitle) personalTitle.textContent = t('personalLimit');
+            if (inputLabels[0]) inputLabels[0].textContent = t('perTxLimit');
+            if (inputLabels[1]) inputLabels[1].textContent = t('dailyLimitLabel');
+            if (inputHints[0]) inputHints[0].textContent = t('perTxHint');
+            if (inputHints[1]) inputHints[1].textContent = t('dailyHint');
+            if (usageLabel) usageLabel.textContent = t('todayUsage');
+            if (limitBtns[0]) limitBtns[0].textContent = t('cancel');
+            if (limitBtns[1]) limitBtns[1].textContent = t('save');
+        }
+
+        // Init language on load
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.lang === currentLang);
+            });
+            applyTranslations();
+        });
 
         init();
     </script>

@@ -27,43 +27,58 @@
             font-weight: 600;
             color: var(--text-primary);
         }
-        .home-lang-btn {
-            background: none;
+        /* Language Switcher */
+        .lang-switcher {
+            display: flex;
+            gap: 4px;
+            background: var(--bg-card);
+            padding: 3px;
+            border-radius: 8px;
+        }
+        .lang-btn {
+            padding: 5px 10px;
             border: none;
-            color: var(--text-secondary);
-            font-size: 14px;
+            background: transparent;
+            color: var(--text-tertiary);
+            font-size: 12px;
+            border-radius: 6px;
             cursor: pointer;
+            transition: all 0.2s;
+        }
+        .lang-btn.active {
+            background: #FF9500;
+            color: white;
         }
         
         /* Logo Section */
         .home-logo {
             text-align: center;
-            padding: 40px 20px 30px;
+            padding: 20px 20px 16px;
         }
         .home-logo-img {
-            width: 80px;
-            height: 80px;
-            border-radius: 20px;
-            margin-bottom: 16px;
+            width: 56px;
+            height: 56px;
+            border-radius: 14px;
+            margin-bottom: 10px;
         }
         .home-logo-text {
-            font-size: 28px;
+            font-size: 22px;
             font-weight: 700;
             color: var(--text-primary);
-            margin-bottom: 6px;
+            margin-bottom: 4px;
         }
         .home-logo-sub {
-            font-size: 14px;
+            font-size: 12px;
             color: #FF9500;
         }
         .home-logo-badge {
             display: inline-block;
-            margin-top: 10px;
-            padding: 4px 12px;
+            margin-top: 8px;
+            padding: 4px 10px;
             background: rgba(255, 149, 0, 0.15);
             border: 1px solid rgba(255, 149, 0, 0.3);
-            border-radius: 20px;
-            font-size: 12px;
+            border-radius: 16px;
+            font-size: 11px;
             color: #FF9500;
         }
         
@@ -228,8 +243,12 @@
         <!-- Header -->
         <div class="home-header">
             <div></div>
-            <div class="home-header-title">商家端</div>
-            <button class="home-lang-btn" onclick="toggleLang()">中/TH</button>
+            <div class="home-header-title" id="headerTitle">商家端</div>
+            <div class="lang-switcher">
+                <button class="lang-btn active" data-lang="zh" onclick="setLang('zh')">中</button>
+                <button class="lang-btn" data-lang="en" onclick="setLang('en')">EN</button>
+                <button class="lang-btn" data-lang="th" onclick="setLang('th')">ไทย</button>
+            </div>
         </div>
 
         <!-- Logo -->
@@ -323,6 +342,124 @@
     </div>
 
     <script>
+        // i18n translations
+        const i18n = {
+            zh: {
+                headerTitle: '商家端',
+                merchantReceive: '商家收款',
+                merchantPortal: 'Merchant Portal',
+                receiveStats: '收款统计',
+                today: '今日',
+                receiveAmount: '收款金额',
+                txCount: '交易笔数',
+                scanReceive: '扫码收款',
+                scanReceiveDesc: '扫描客户付款码收款',
+                qrCode: '收款码',
+                qrCodeDesc: '展示 PromptPay 收款码',
+                receiveHistory: '收款记录',
+                receiveHistoryDesc: '查看历史收款明细',
+                quickFeatures: '快捷功能',
+                settings: '设置',
+                notify: '通知',
+                export: '导出',
+                help: '帮助',
+                zeroTouch: 'Zero-Touch Crypto™',
+                merchantOnlyThb: '商家只看泰铢金额 · 自动结算'
+            },
+            en: {
+                headerTitle: 'Merchant',
+                merchantReceive: 'Merchant Receive',
+                merchantPortal: 'Merchant Portal',
+                receiveStats: 'Receiving Stats',
+                today: 'Today',
+                receiveAmount: 'Amount Received',
+                txCount: 'Transactions',
+                scanReceive: 'Scan to Receive',
+                scanReceiveDesc: 'Scan customer payment QR',
+                qrCode: 'QR Code',
+                qrCodeDesc: 'Show PromptPay QR code',
+                receiveHistory: 'Receive History',
+                receiveHistoryDesc: 'View past receiving records',
+                quickFeatures: 'Quick Features',
+                settings: 'Settings',
+                notify: 'Notify',
+                export: 'Export',
+                help: 'Help',
+                zeroTouch: 'Zero-Touch Crypto™',
+                merchantOnlyThb: 'Merchant sees THB only · Auto settlement'
+            },
+            th: {
+                headerTitle: 'ร้านค้า',
+                merchantReceive: 'รับเงินร้านค้า',
+                merchantPortal: 'Merchant Portal',
+                receiveStats: 'สถิติรับเงิน',
+                today: 'วันนี้',
+                receiveAmount: 'ยอดรับ',
+                txCount: 'รายการ',
+                scanReceive: 'สแกนรับเงิน',
+                scanReceiveDesc: 'สแกน QR ลูกค้าเพื่อรับเงิน',
+                qrCode: 'QR Code',
+                qrCodeDesc: 'แสดง QR PromptPay',
+                receiveHistory: 'ประวัติรับเงิน',
+                receiveHistoryDesc: 'ดูรายการรับเงินที่ผ่านมา',
+                quickFeatures: 'ฟีเจอร์ด่วน',
+                settings: 'ตั้งค่า',
+                notify: 'แจ้งเตือน',
+                export: 'ส่งออก',
+                help: 'ช่วยเหลือ',
+                zeroTouch: 'Zero-Touch Crypto™',
+                merchantOnlyThb: 'ร้านค้าเห็นแค่บาท · ชำระอัตโนมัติ'
+            }
+        };
+
+        let currentLang = localStorage.getItem('boonlink_lang') || 'zh';
+
+        function setLang(lang) {
+            currentLang = lang;
+            localStorage.setItem('boonlink_lang', lang);
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.lang === lang);
+            });
+            applyTranslations();
+        }
+
+        function t(key) {
+            return i18n[currentLang]?.[key] || i18n['zh'][key] || key;
+        }
+
+        function applyTranslations() {
+            document.getElementById('headerTitle').textContent = t('headerTitle');
+            document.querySelector('.home-logo-sub').textContent = t('merchantReceive');
+            document.querySelector('.home-logo-badge').textContent = '🏪 ' + t('merchantPortal');
+            document.querySelector('.stats-title').textContent = t('receiveStats');
+            document.querySelector('.stats-period').textContent = t('today');
+            
+            const statsLabels = document.querySelectorAll('.stats-label');
+            if (statsLabels[0]) statsLabels[0].textContent = t('receiveAmount');
+            if (statsLabels[1]) statsLabels[1].textContent = t('txCount');
+            
+            const actionTitles = document.querySelectorAll('.action-btn-title');
+            const actionDescs = document.querySelectorAll('.action-btn-desc');
+            if (actionTitles[0]) actionTitles[0].textContent = t('scanReceive');
+            if (actionDescs[0]) actionDescs[0].textContent = t('scanReceiveDesc');
+            if (actionTitles[1]) actionTitles[1].textContent = t('qrCode');
+            if (actionDescs[1]) actionDescs[1].textContent = t('qrCodeDesc');
+            if (actionTitles[2]) actionTitles[2].textContent = t('receiveHistory');
+            if (actionDescs[2]) actionDescs[2].textContent = t('receiveHistoryDesc');
+            
+            document.querySelector('.quick-title').textContent = t('quickFeatures');
+            
+            const quickLabels = document.querySelectorAll('.quick-label');
+            if (quickLabels[0]) quickLabels[0].textContent = t('settings');
+            if (quickLabels[1]) quickLabels[1].textContent = t('notify');
+            if (quickLabels[2]) quickLabels[2].textContent = t('export');
+            if (quickLabels[3]) quickLabels[3].textContent = t('help');
+            
+            document.querySelector('.home-footer-badge span').textContent = t('zeroTouch');
+            const footerTexts = document.querySelectorAll('.home-footer > div');
+            if (footerTexts[1]) footerTexts[1].textContent = t('merchantOnlyThb');
+        }
+
         // Load stats from localStorage (demo)
         function loadStats() {
             const stats = JSON.parse(localStorage.getItem('merchantStats') || '{"amount":0,"count":0}');
@@ -330,11 +467,14 @@
             document.getElementById('todayCount').textContent = stats.count;
         }
 
-        function toggleLang() {
-            alert('语言切换功能开发中');
-        }
-
-        loadStats();
+        // Init
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.lang === currentLang);
+            });
+            applyTranslations();
+            loadStats();
+        });
     </script>
 </body>
 </html>

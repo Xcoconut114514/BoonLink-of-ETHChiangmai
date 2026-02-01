@@ -43,29 +43,29 @@ export default async function handler(req, res) {
         });
     }
 
-    // Build message (NO CRYPTO INFO - compliance!)
+    // Build message (NO CRYPTO INFO - compliance!) - English version
     let message;
 
     // Test message (when amountTHB = 0)
     if (amountTHB === 0 && note === '测试消息') {
-        message = `🔔 BoonLink 连接测试成功！
+        message = `🔔 BoonLink Connection Test Successful!
 
-✅ 您的商家 ID 已配置正确
-✅ LINE 通知功能正常
-✅ 当收到付款时，您将在此收到通知
+✅ Your Merchant ID is configured correctly
+✅ LINE notification is working
+✅ You will receive notifications when payments arrive
 
 ---
-BoonLink - 智能收款助手`;
+BoonLink - Smart Payment Assistant`;
     } else {
-        // Real payment notification
-        message = `BoonLink 收款通知 ✅
+        // Real payment notification - English
+        message = `BoonLink Payment Received ✅
 
-💰 金额: ฿${Number(amountTHB).toLocaleString()}
-${note ? `📝 备注: ${note}\n` : ''}⏰ 时间: ${timestamp || new Date().toLocaleString('zh-CN')}
-📋 订单: ${orderId || 'N/A'}
+💰 Amount: ฿${Number(amountTHB).toLocaleString()}
+${note ? `📝 Note: ${note}\n` : ''}⏰ Time: ${timestamp || new Date().toLocaleString('en-US')}
+📋 Order: ${orderId || 'N/A'}
 
 ---
-BoonLink - 智能收款助手`;
+BoonLink - Smart Payment Assistant`;
     }
 
     try {

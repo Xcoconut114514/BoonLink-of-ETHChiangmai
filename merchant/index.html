@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#EDEDED">
+    <title>BoonLink 商家端</title>
+    <link rel="stylesheet" href="../shared/css/common.css">
+    <link rel="icon" href="../shared/assets/logo.png" type="image/png">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Language Switcher -->
+        <div class="language-switcher">
+            <button class="lang-btn active" data-lang="zh" onclick="setLanguage('zh')">中文</button>
+            <button class="lang-btn" data-lang="en" onclick="setLanguage('en')">EN</button>
+            <button class="lang-btn" data-lang="th" onclick="setLanguage('th')">ไทย</button>
+        </div>
+
+        <!-- Logo Section -->
+        <div class="logo-container">
+            <img src="../shared/assets/logo.png" alt="BoonLink" class="logo-image">
+            <div class="logo-text">BoonLink</div>
+            <div class="logo-subtitle" data-i18n="merchantHome" data-i18n-section="merchant">商家收款</div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="app-content" style="padding-top: 0;">
+            <!-- Main Actions -->
+            <a href="receive.html" class="btn btn-primary btn-large" style="margin-bottom: 12px;">
+                <span data-i18n="scanToReceive" data-i18n-section="merchant">扫码收款</span>
+            </a>
+
+            <a href="history.html" class="btn btn-secondary btn-large" style="margin-bottom: 12px;">
+                <span data-i18n="receiveHistory" data-i18n-section="merchant">收款记录</span>
+            </a>
+
+            <a href="settings.html" class="btn btn-secondary btn-large">
+                <span data-i18n="notificationSettings" data-i18n-section="merchant">通知设置</span>
+            </a>
+
+            <!-- Note: This page shows NO crypto information -->
+            <!-- Merchants only see THB amounts, order IDs, and notes -->
+        </div>
+
+        <!-- Footer -->
+        <div class="footer-info">
+            <p>💚 Fiat Settlement Gateway</p>
+            <p style="font-size: 11px; margin-top: 4px; color: var(--text-tertiary);">Zero-Touch Crypto™</p>
+        </div>
+    </div>
+
+    <script src="../shared/js/i18n.js"></script>
+</body>
+</html>

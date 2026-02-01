@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#EDEDED">
+    <title>通知设置 - BoonLink 商家</title>
+    <link rel="stylesheet" href="../shared/css/common.css">
+    <link rel="icon" href="../shared/assets/logo.png" type="image/png">
+    <style>
+        .settings-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: var(--shadow-card);
+        }
+        .settings-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .setting-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .setting-row:last-child {
+            border-bottom: none;
+        }
+        .setting-label {
+            font-size: 14px;
+            color: var(--text-primary);
+        }
+        .setting-desc {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+        .toggle {
+            position: relative;
+            width: 50px;
+            height: 28px;
+        }
+        .toggle input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--border-color);
+            transition: 0.3s;
+            border-radius: 28px;
+        }
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: 0.3s;
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .toggle input:checked + .toggle-slider {
+            background-color: var(--accent-green);
+        }
+        .toggle input:checked + .toggle-slider:before {
+            transform: translateX(22px);
+        }
+        .input-field {
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 14px;
+            color: var(--text-primary);
+            margin-top: 12px;
+        }
+        .input-field:focus {
+            outline: none;
+            border-color: var(--accent-green);
+        }
+        .voice-lang-options {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        .voice-lang-btn {
+            flex: 1;
+            padding: 10px;
+            background: var(--bg-input);
+            border: 2px solid transparent;
+            border-radius: 10px;
+            font-size: 14px;
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+        .voice-lang-btn.active {
+            background: rgba(7, 193, 96, 0.1);
+            border-color: var(--accent-green);
+            color: var(--accent-green);
+        }
+        .help-text {
+            background: var(--bg-input);
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 12px;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Language Switcher -->
+        <div class="language-switcher">
+            <button class="lang-btn active" data-lang="zh" onclick="setLanguage('zh')">中文</button>
+            <button class="lang-btn" data-lang="en" onclick="setLanguage('en')">EN</button>
+            <button class="lang-btn" data-lang="th" onclick="setLanguage('th')">ไทย</button>
+        </div>
+
+        <!-- Header -->
+        <div class="logo-container" style="padding: 20px;">
+            <a href="receive.html" style="text-decoration: none; display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 20px;">←</span>
+                <span style="color: var(--text-secondary);" data-i18n="back" data-i18n-section="common">返回</span>
+            </a>
+            <div class="logo-text" style="font-size: 20px; margin-top: 8px;" data-i18n="notificationSettings" data-i18n-section="merchant">通知设置</div>
+        </div>
+
+        <div class="app-content" style="padding-top: 0;">
+            <!-- Voice Settings -->
+            <div class="settings-card">
+                <div class="settings-title">
+                    <span>🔊</span>
+                    <span data-i18n="voiceSettings" data-i18n-section="merchant">语音播报</span>
+                </div>
+
+                <div class="setting-row">
+                    <div>
+                        <div class="setting-label" data-i18n="autoPlay" data-i18n-section="merchant">自动播报</div>
+                        <div class="setting-desc" data-i18n="autoPlayDesc" data-i18n-section="merchant">收款成功后自动播放语音</div>
+                    </div>
+                    <label class="toggle">
+                        <input type="checkbox" id="autoVoice" checked onchange="saveVoiceSettings()">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+
+                <div style="padding-top: 12px;">
+                    <div class="setting-label" data-i18n="voiceLanguage" data-i18n-section="merchant">播报语言</div>
+                    <div class="voice-lang-options">
+                        <button class="voice-lang-btn active" data-voice-lang="zh" onclick="setVoiceLang('zh')">中文</button>
+                        <button class="voice-lang-btn" data-voice-lang="en" onclick="setVoiceLang('en')">English</button>
+                        <button class="voice-lang-btn" data-voice-lang="th" onclick="setVoiceLang('th')">ไทย</button>
+                    </div>
+                </div>
+
+                <button class="btn btn-secondary" style="margin-top: 16px; width: 100%;" onclick="testVoice()">
+                    <span data-i18n="testVoice" data-i18n-section="merchant">测试语音</span>
+                </button>
+            </div>
+
+            <!-- LINE Notification -->
+            <div class="settings-card">
+                <div class="settings-title">
+                    <span>💚</span>
+                    <span data-i18n="lineNotification" data-i18n-section="merchant">LINE 通知</span>
+                </div>
+
+                <div class="setting-row">
+                    <div>
+                        <div class="setting-label" data-i18n="enableLine" data-i18n-section="merchant">启用 LINE 通知</div>
+                        <div class="setting-desc" data-i18n="enableLineDesc" data-i18n-section="merchant">收款成功后发送 LINE 消息</div>
+                    </div>
+                    <label class="toggle">
+                        <input type="checkbox" id="lineEnabled" onchange="saveLineSettings()">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+
+                <input type="text" class="input-field" id="lineUserId"
+                    data-i18n-placeholder="enterMerchantId" data-i18n-section="merchant"
+                    placeholder="输入您的商家 ID" onchange="saveLineSettings()">
+
+                <div class="help-text">
+                    <strong data-i18n="howToGetId" data-i18n-section="merchant">如何获取商家 ID：</strong><br>
+                    <span data-i18n="step1" data-i18n-section="merchant">1. 在 LINE 搜索并添加 BoonLink 官方账号</span><br>
+                    <span data-i18n="step2" data-i18n-section="merchant">2. 发送「我的ID」到官方账号</span><br>
+                    <span data-i18n="step3" data-i18n-section="merchant">3. 复制返回的 ID 粘贴到上方输入框</span>
+                </div>
+            </div>
+
+            <!-- Save Button -->
+            <button class="btn btn-primary btn-large" onclick="saveAll()">
+                <span data-i18n="save" data-i18n-section="common">保存设置</span>
+            </button>
+        </div>
+    </div>
+
+    <script src="../shared/js/i18n.js"></script>
+    <script src="js/voice.js"></script>
+    <script src="js/notify.js"></script>
+    <script>
+        // Load saved settings
+        function loadSettings() {
+            // Voice settings
+            const voiceSettings = getVoiceSettings();
+            document.getElementById('autoVoice').checked = voiceSettings.autoPlay;
+            setVoiceLang(voiceSettings.language, false);
+
+            // LINE settings
+            const lineSettings = getNotificationSettings();
+            document.getElementById('lineEnabled').checked = lineSettings.enabled;
+            document.getElementById('lineUserId').value = lineSettings.lineUserId || '';
+        }
+
+        // Set voice language
+        function setVoiceLang(lang, save = true) {
+            document.querySelectorAll('.voice-lang-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector(`[data-voice-lang="${lang}"]`).classList.add('active');
+
+            if (save) {
+                saveVoiceSettings();
+            }
+        }
+
+        // Save voice settings
+        function saveVoiceSettings() {
+            const activeBtn = document.querySelector('.voice-lang-btn.active');
+            setVoiceSettings({
+                autoPlay: document.getElementById('autoVoice').checked,
+                language: activeBtn ? activeBtn.dataset.voiceLang : 'zh'
+            });
+        }
+
+        // Save LINE settings
+        function saveLineSettings() {
+            setNotificationSettings({
+                enabled: document.getElementById('lineEnabled').checked,
+                lineUserId: document.getElementById('lineUserId').value.trim()
+            });
+        }
+
+        // Test voice
+        function testVoice() {
+            const activeBtn = document.querySelector('.voice-lang-btn.active');
+            const lang = activeBtn ? activeBtn.dataset.voiceLang : 'zh';
+            playVoiceAnnouncement(100, '测试订单', lang);
+        }
+
+        // Save all
+        function saveAll() {
+            saveVoiceSettings();
+            saveLineSettings();
+
+            const lang = BoonLinkI18n.getCurrentLanguage();
+            const msg = lang === 'zh' ? '设置已保存' :
+                       lang === 'th' ? 'บันทึกการตั้งค่าแล้ว' :
+                       'Settings saved';
+            alert(msg);
+        }
+
+        // Initialize
+        loadSettings();
+    </script>
+</body>
+</html>

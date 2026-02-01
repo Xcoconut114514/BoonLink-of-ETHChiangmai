@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#EDEDED">
+    <title>BoonLink 商家 - 收款</title>
+    <link rel="stylesheet" href="../shared/css/common.css">
+    <link rel="icon" href="../shared/assets/logo.png" type="image/png">
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <style>
+        .scanner-container {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 16px;
+            box-shadow: var(--shadow-card);
+        }
+        .scanner-box {
+            width: 100%;
+            max-width: 300px;
+            height: 300px;
+            margin: 0 auto;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #000;
+        }
+        .scanner-hint {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin-top: 16px;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 32px 24px;
+            margin: 20px;
+            max-width: 360px;
+            width: 100%;
+            text-align: center;
+        }
+        .success-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+        }
+        .warning-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+        }
+        .receipt-card {
+            background: var(--bg-input);
+            border-radius: 12px;
+            padding: 16px;
+            margin: 20px 0;
+            text-align: left;
+        }
+        .receipt-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .receipt-item:last-child {
+            border-bottom: none;
+        }
+        .receipt-item .label {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+        .receipt-item .value {
+            color: var(--text-primary);
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .receipt-item .amount {
+            font-size: 24px;
+            color: var(--accent-green);
+        }
+        .warning-note {
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin-top: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Language Switcher -->
+        <div class="language-switcher">
+            <button class="lang-btn active" data-lang="zh" onclick="setLanguage('zh')">中文</button>
+            <button class="lang-btn" data-lang="en" onclick="setLanguage('en')">EN</button>
+            <button class="lang-btn" data-lang="th" onclick="setLanguage('th')">ไทย</button>
+        </div>
+
+        <!-- Header -->
+        <div class="logo-container" style="padding: 20px;">
+            <img src="../shared/assets/logo.png" alt="BoonLink" class="logo-image" style="width: 48px; height: 48px;">
+            <div class="logo-text" style="font-size: 20px;" data-i18n="scanPaymentCode" data-i18n-section="merchant">扫码收款</div>
+        </div>
+
+        <!-- Scanner -->
+        <div class="scanner-container">
+            <div class="scanner-box">
+                <div id="reader"></div>
+            </div>
+            <p class="scanner-hint" data-i18n="letCustomerShowQR" data-i18n-section="merchant">请让顾客出示付款码</p>
+        </div>
+
+        <!-- Quick Links -->
+        <div class="app-content" style="padding-top: 0;">
+            <a href="settings.html" class="btn btn-secondary btn-large" style="margin-bottom: 12px;">
+                <span data-i18n="notificationSettings" data-i18n-section="merchant">通知设置</span>
+            </a>
+            <a href="history.html" class="btn btn-secondary btn-large">
+                <span data-i18n="receiveHistory" data-i18n-section="merchant">收款记录</span>
+            </a>
+        </div>
+
+        <!-- Success Modal (NO CRYPTO INFO!) -->
+        <div id="successModal" class="modal">
+            <div class="modal-content">
+                <div class="success-icon">✅</div>
+                <h2 style="margin: 0 0 8px;" data-i18n="paymentReceived" data-i18n-section="merchant">收款成功</h2>
+
+                <div class="receipt-card">
+                    <div class="receipt-item">
+                        <span class="label" data-i18n="amountReceived" data-i18n-section="merchant">金额</span>
+                        <span class="value amount" id="receiptAmount">฿0.00</span>
+                    </div>
+                    <div class="receipt-item" id="noteRow" style="display: none;">
+                        <span class="label" data-i18n="note" data-i18n-section="common">备注</span>
+                        <span class="value" id="receiptNote"></span>
+                    </div>
+                    <div class="receipt-item">
+                        <span class="label" data-i18n="time" data-i18n-section="merchant">时间</span>
+                        <span class="value" id="receiptTime"></span>
+                    </div>
+                    <div class="receipt-item">
+                        <span class="label" data-i18n="orderId" data-i18n-section="merchant">订单号</span>
+                        <span class="value" id="receiptOrderId"></span>
+                    </div>
+                    <!-- NO CRYPTO INFO: No USDT, no wallet address, no tx hash! -->
+                </div>
+
+                <button class="btn btn-primary btn-large" onclick="continueReceiving()">
+                    <span data-i18n="continueReceiving" data-i18n-section="merchant">继续收款</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Duplicate Warning Modal -->
+        <div id="duplicateModal" class="modal">
+            <div class="modal-content">
+                <div class="warning-icon">⚠️</div>
+                <h2 style="margin: 0 0 8px;" data-i18n="duplicateWarning" data-i18n-section="merchant">检测到重复付款码</h2>
+                <p><span data-i18n="alreadyScanned" data-i18n-section="merchant">此付款码已被扫描过</span>: <span id="previousTime"></span></p>
+                <p class="warning-note" data-i18n="askNewQR" data-i18n-section="merchant">请让顾客重新生成付款码</p>
+                <button class="btn btn-secondary btn-large" onclick="closeDuplicateWarning()" style="margin-top: 20px;">
+                    <span data-i18n="understood" data-i18n-section="merchant">我知道了</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../shared/js/i18n.js"></script>
+    <script src="js/offline-cache.js"></script>
+    <script src="js/voice.js"></script>
+    <script src="js/notify.js"></script>
+    <script>
+        let html5QrcodeScanner;
+        let cache;
+
+        // Initialize
+        async function init() {
+            // Initialize cache
+            cache = new OfflinePaymentCache();
+            await cache.init();
+
+            // Initialize scanner
+            html5QrcodeScanner = new Html5Qrcode("reader");
+
+            try {
+                await html5QrcodeScanner.start(
+                    { facingMode: "environment" },
+                    {
+                        fps: 10,
+                        qrbox: { width: 250, height: 250 }
+                    },
+                    onScanSuccess,
+                    onScanFailure
+                );
+            } catch (err) {
+                console.error("Scanner error:", err);
+                document.querySelector('.scanner-hint').textContent =
+                    BoonLinkI18n.getCurrentLanguage() === 'zh' ? '无法访问摄像头，请检查权限' :
+                    BoonLinkI18n.getCurrentLanguage() === 'th' ? 'ไม่สามารถเข้าถึงกล้องได้' :
+                    'Cannot access camera, please check permissions';
+            }
+        }
+
+        // Scan success handler
+        async function onScanSuccess(decodedText) {
+            try {
+                const qrData = JSON.parse(decodedText);
+
+                if (qrData.type !== 'BOONLINK_PAYMENT') {
+                    console.log('Not a BoonLink payment QR');
+                    return;
+                }
+
+                // Pause scanner
+                await html5QrcodeScanner.pause();
+
+                const paymentData = qrData.data;
+
+                // Validate payment
+                const validation = await validateIncomingPayment(paymentData, cache);
+
+                if (!validation.valid) {
+                    if (validation.error === 'DUPLICATE_PAYMENT') {
+                        showDuplicateWarning(validation.previousTime);
+                    } else {
+                        alert(validation.message);
+                        await html5QrcodeScanner.resume();
+                    }
+                    return;
+                }
+
+                // Show success
+                showSuccessModal(paymentData);
+
+                // Play voice
+                const voiceSettings = getVoiceSettings();
+                if (voiceSettings.autoPlay) {
+                    try {
+                        await playVoiceAnnouncement(
+                            paymentData.amountTHB,
+                            paymentData.note,
+                            voiceSettings.language
+                        );
+                    } catch (e) {
+                        console.error('Voice failed:', e);
+                    }
+                }
+
+                // Send notification
+                try {
+                    await sendNotification(paymentData);
+                } catch (e) {
+                    console.error('Notification failed:', e);
+                }
+
+            } catch (error) {
+                console.log('Not a valid QR:', error);
+            }
+        }
+
+        function onScanFailure(error) {
+            // Ignore scan failures
+        }
+
+        function showSuccessModal(data) {
+            document.getElementById('receiptAmount').textContent = `฿${data.amountTHB.toLocaleString()}`;
+            document.getElementById('receiptTime').textContent = new Date().toLocaleString('zh-CN');
+            document.getElementById('receiptOrderId').textContent = data.orderId;
+
+            if (data.note) {
+                document.getElementById('noteRow').style.display = 'flex';
+                document.getElementById('receiptNote').textContent = data.note;
+            } else {
+                document.getElementById('noteRow').style.display = 'none';
+            }
+
+            document.getElementById('successModal').style.display = 'flex';
+        }
+
+        function showDuplicateWarning(previousTime) {
+            document.getElementById('previousTime').textContent =
+                new Date(previousTime).toLocaleString('zh-CN');
+            document.getElementById('duplicateModal').style.display = 'flex';
+        }
+
+        async function continueReceiving() {
+            document.getElementById('successModal').style.display = 'none';
+            await html5QrcodeScanner.resume();
+        }
+
+        async function closeDuplicateWarning() {
+            document.getElementById('duplicateModal').style.display = 'none';
+            await html5QrcodeScanner.resume();
+        }
+
+        // Start
+        init();
+    </script>
+</body>
+</html>

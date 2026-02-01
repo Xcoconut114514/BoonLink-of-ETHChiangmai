@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#EDEDED">
+    <title>BoonLink - 连接钱包</title>
+    <link rel="stylesheet" href="../shared/css/common.css">
+    <link rel="icon" href="../shared/assets/logo.png" type="image/png">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Language Switcher -->
+        <div class="language-switcher">
+            <button class="lang-btn active" data-lang="zh" onclick="setLanguage('zh')">中文</button>
+            <button class="lang-btn" data-lang="en" onclick="setLanguage('en')">EN</button>
+            <button class="lang-btn" data-lang="th" onclick="setLanguage('th')">ไทย</button>
+        </div>
+
+        <!-- Logo Section -->
+        <div class="logo-container">
+            <img src="../shared/assets/logo.png" alt="BoonLink" class="logo-image">
+            <div class="logo-text">BoonLink</div>
+            <div class="logo-subtitle">Crypto → PromptPay</div>
+        </div>
+
+        <!-- Not Connected Section -->
+        <div class="app-content" id="connectSection">
+            <div class="card">
+                <div class="card-header" style="text-align: center;">
+                    <span style="font-size: 32px;">🔗</span>
+                    <div style="margin-top: 8px;" data-i18n="connectWallet" data-i18n-section="customer">连接钱包</div>
+                </div>
+                <p style="text-align: center; color: var(--text-secondary); margin-bottom: 20px;" data-i18n="connectWalletDesc" data-i18n-section="customer">
+                    使用自托管钱包进行安全支付
+                </p>
+
+                <button class="btn btn-primary btn-large" onclick="handleConnect()" style="margin-bottom: 12px;">
+                    <span data-i18n="connectMetaMask" data-i18n-section="customer">连接 MetaMask</span>
+                </button>
+
+                <div class="details-list" style="margin-top: 20px;">
+                    <div class="detail-item">
+                        <span class="detail-label">🔐 <span data-i18n="privateKeySafe" data-i18n-section="customer">私钥安全</span></span>
+                        <span class="detail-value" data-i18n="youControl" data-i18n-section="customer">您自己保管</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">📵 <span data-i18n="offlinePayment" data-i18n-section="customer">离线支付</span></span>
+                        <span class="detail-value" data-i18n="supported" data-i18n-section="customer">支持</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">⚡ <span data-i18n="network" data-i18n-section="customer">网络</span></span>
+                        <span class="detail-value">BSC (<span data-i18n="lowGas" data-i18n-section="customer">低 Gas</span>)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Connected Section -->
+        <div class="app-content" id="connectedSection" style="display: none;">
+            <div class="card">
+                <div class="card-header" data-i18n="walletConnected" data-i18n-section="customer">钱包已连接</div>
+                <div class="details-list">
+                    <div class="detail-item">
+                        <span class="detail-label" data-i18n="address" data-i18n-section="customer">地址</span>
+                        <span class="detail-value" id="walletAddress">0x...1234</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">USDT <span data-i18n="balance" data-i18n-section="customer">余额</span></span>
+                        <span class="detail-value" id="usdtBalance">--</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label" data-i18n="remainingLimit" data-i18n-section="customer">今日剩余限额</span>
+                        <span class="detail-value" id="remainingLimit">฿10,000</span>
+                    </div>
+                </div>
+            </div>
+
+            <a href="scan.html" class="btn btn-primary btn-large" style="margin-bottom: 12px;">
+                <span data-i18n="scanPromptPay" data-i18n-section="customer">扫码支付 PromptPay</span>
+            </a>
+
+            <a href="settings.html" class="btn btn-secondary btn-large">
+                <span data-i18n="paymentLimits" data-i18n-section="customer">设置支付限额</span>
+            </a>
+
+            <div style="text-align: center; margin-top: 20px;">
+                <a href="#" onclick="handleDisconnect()" class="back-link" style="color: var(--text-tertiary);">
+                    <span data-i18n="disconnectWallet" data-i18n-section="customer">断开钱包</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer-info">
+            <p>🔒 <span data-i18n="nonCustodial" data-i18n-section="customer">Non-custodial · 私钥不离手</span></p>
+        </div>
+    </div>
+
+    <script src="../shared/js/i18n.js"></script>
+    <script src="js/payment-limits.js"></script>
+    <script src="js/wallet.js"></script>
+    <script>
+        // Check if already connected
+        async function init() {
+            const state = await BoonLinkWallet.checkConnection();
+            if (state && state.isConnected) {
+                await showConnectedState(state);
+            }
+        }
+
+        // Connect wallet
+        async function handleConnect() {
+            try {
+                const state = await BoonLinkWallet.connect();
+                await showConnectedState(state);
+            } catch (error) {
+                alert(BoonLinkI18n.tc('error') + ': ' + error.message);
+            }
+        }
+
+        // Disconnect wallet
+        function handleDisconnect() {
+            BoonLinkWallet.disconnect();
+            document.getElementById('connectSection').style.display = 'block';
+            document.getElementById('connectedSection').style.display = 'none';
+        }
+
+        // Show connected state
+        async function showConnectedState(state) {
+            document.getElementById('connectSection').style.display = 'none';
+            document.getElementById('connectedSection').style.display = 'block';
+
+            // Display address
+            const addr = state.address;
+            document.getElementById('walletAddress').textContent =
+                addr.substring(0, 6) + '...' + addr.substring(addr.length - 4);
+
+            // Get balance
+            try {
+                const balance = await BoonLinkWallet.getBalance('USDT');
+                document.getElementById('usdtBalance').textContent = balance + ' USDT';
+            } catch (e) {
+                document.getElementById('usdtBalance').textContent = '--';
+            }
+
+            // Get limit status
+            const limitStatus = BoonLinkLimits.getLimitStatus();
+            document.getElementById('remainingLimit').textContent =
+                '฿' + limitStatus.remainingDaily.toLocaleString();
+        }
+
+        // Initialize
+        init();
+    </script>
+</body>
+</html>

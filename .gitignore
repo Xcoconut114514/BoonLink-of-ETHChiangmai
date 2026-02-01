@@ -8,6 +8,8 @@ dist/
 
 # Environment files
 .env
+.env.local
+.env.*.local
 .env.*
 !.env.example
 
@@ -35,3 +37,16 @@ openclaw/
 # Cache
 .cache/
 *.tsbuildinfo
+
+# Vercel
+.vercel/
+
+# Claude/AI planning files
+.claude/
+
+# Security - files containing credentials
+COPILOT_PUSH_GUIDE.md
+*secret*
+*token*
+*password*
+*credentials*

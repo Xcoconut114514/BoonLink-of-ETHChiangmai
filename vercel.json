@@ -1,0 +1,27 @@
+{
+  "version": 2,
+  "builds": [
+    { "src": "customer/**", "use": "@vercel/static" },
+    { "src": "merchant/**", "use": "@vercel/static" },
+    { "src": "shared/**", "use": "@vercel/static" },
+    { "src": "api/**/*.js", "use": "@vercel/node" }
+  ],
+  "routes": [
+    { "src": "/pay/(.*)", "dest": "/customer/$1" },
+    { "src": "/pay", "dest": "/customer/index.html" },
+    { "src": "/receive/(.*)", "dest": "/merchant/$1" },
+    { "src": "/receive", "dest": "/merchant/index.html" },
+    { "src": "/shared/(.*)", "dest": "/shared/$1" },
+    { "src": "/api/(.*)", "dest": "/api/$1" },
+    { "src": "/", "dest": "/customer/index.html" }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Frame-Options", "value": "DENY" },
+        { "key": "X-Content-Type-Options", "value": "nosniff" }
+      ]
+    }
+  ]
+}

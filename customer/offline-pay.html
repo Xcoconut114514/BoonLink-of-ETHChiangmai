@@ -279,52 +279,79 @@
     </div>
     
     <!-- QRCode.js library - lightweight, no dependencies -->
-    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js" onerror="console.warn('QRCode CDN failed')"></script>
     
     <script>
         // ============================================
-        // QR Code Generator - Using QRCode library with fallback
+        // QR Code Generator - Multiple fallbacks
         // ============================================
         const QRCodeGenerator = {
             async generate(canvas, text, size) {
                 size = size || 200;
                 canvas.width = size;
                 canvas.height = size;
+                const ctx = canvas.getContext('2d');
                 
-                try {
-                    // Use the QRCode library from CDN
-                    if (typeof QRCode !== 'undefined') {
+                console.log('🔄 Starting QR generation, data length:', text.length);
+                
+                // Method 1: QRCode library (if loaded)
+                if (typeof QRCode !== 'undefined' && QRCode.toCanvas) {
+                    try {
                         await QRCode.toCanvas(canvas, text, {
                             width: size,
                             margin: 1,
-                            errorCorrectionLevel: 'M',
+                            errorCorrectionLevel: 'L',
                             color: { dark: '#000000', light: '#ffffff' }
                         });
                         console.log('✅ QR generated using QRCode library');
                         return;
+                    } catch (e) {
+                        console.warn('QRCode library failed:', e);
                     }
-                } catch (e) {
-                    console.error('QRCode library failed:', e);
                 }
                 
-                // Fallback: use API
-                try {
+                // Method 2: API with image
+                console.log('🔄 Trying API method...');
+                const apis = [
+                    `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(text)}&format=png&ecc=L`,
+                    `https://quickchart.io/qr?text=${encodeURIComponent(text)}&size=${size}&margin=1`
+                ];
+                
+                for (const apiUrl of apis) {
+                    try {
+                        const img = await this.loadImage(apiUrl);
+                        ctx.fillStyle = '#ffffff';
+                        ctx.fillRect(0, 0, size, size);
+                        ctx.drawImage(img, 0, 0, size, size);
+                        console.log('✅ QR generated using API');
+                        return;
+                    } catch (e) {
+                        console.warn('API failed:', apiUrl, e);
+                    }
+                }
+                
+                // Method 3: Simple visual indicator (last resort - not scannable)
+                console.error('❌ All QR methods failed, showing data indicator');
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, size, size);
+                ctx.fillStyle = '#000000';
+                ctx.font = '12px monospace';
+                ctx.textAlign = 'center';
+                ctx.fillText('QR生成失败', size/2, size/2 - 10);
+                ctx.fillText('请检查网络', size/2, size/2 + 10);
+                throw new Error('QR码生成失败，请检查网络连接');
+            },
+            
+            loadImage(url) {
+                return new Promise((resolve, reject) => {
                     const img = new Image();
                     img.crossOrigin = 'anonymous';
-                    await new Promise((resolve, reject) => {
-                        img.onload = resolve;
-                        img.onerror = reject;
-                        img.src = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(text)}&format=png`;
-                    });
-                    const ctx = canvas.getContext('2d');
-                    ctx.fillStyle = '#ffffff';
-                    ctx.fillRect(0, 0, size, size);
-                    ctx.drawImage(img, 0, 0, size, size);
-                    console.log('✅ QR generated using API fallback');
-                } catch (e) {
-                    console.error('API fallback failed:', e);
-                    throw new Error('无法生成QR码');
-                }
+                    img.onload = () => resolve(img);
+                    img.onerror = () => reject(new Error('Image load failed'));
+                    // Timeout after 5 seconds
+                    setTimeout(() => reject(new Error('Image load timeout')), 5000);
+                    img.src = url;
+                });
             }
         };
         
@@ -599,7 +626,16 @@
                 const qrDataStr = JSON.stringify(qrPayload);
                 console.log('📱 Generating QR with data length:', qrDataStr.length);
                 console.log('📦 QR Payload:', qrPayload);
-                await QRCodeGenerator.generate(canvas, qrDataStr, 200);
+                
+                try {
+                    await QRCodeGenerator.generate(canvas, qrDataStr, 200);
+                } catch (qrError) {
+                    console.error('QR generation failed:', qrError);
+                    alert('二维码生成失败: ' + qrError.message);
+                    btn.classList.remove('loading');
+                    btnText.textContent = t('generateBtn');
+                    return;
+                }
                 
                 // Show QR
                 document.getElementById('inputSection').style.display = 'none';
@@ -610,7 +646,7 @@
                 secondsLeft = 300;
                 startCountdown();
             } catch (e) {
-                console.error('QR error:', e);
+                console.error('Payment error:', e);
                 alert(t('signFailed') + ': ' + e.message);
             } finally {
                 btn.classList.remove('loading');

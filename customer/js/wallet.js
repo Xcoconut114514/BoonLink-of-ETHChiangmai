@@ -395,6 +395,10 @@ window.BoonLinkWallet = {
     BSC_CONFIG
 };
 
+// Also expose key functions globally for easy access in HTML
+window.connectWallet = connectWallet;
+window.disconnectWallet = disconnectWallet;
+
 // ============================================================================
 // Real Transaction Functions
 // ============================================================================
@@ -524,3 +528,6 @@ async function approveToken(tokenSymbol, spender, amount) {
         params: [tx]
     });
 }
+
+// Expose signAndSendPayment globally
+window.signAndSendPayment = signAndSendPayment;

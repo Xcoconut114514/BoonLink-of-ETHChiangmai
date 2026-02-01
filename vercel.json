@@ -1,19 +1,13 @@
 {
   "version": 2,
-  "builds": [
-    { "src": "customer/**", "use": "@vercel/static" },
-    { "src": "merchant/**", "use": "@vercel/static" },
-    { "src": "shared/**", "use": "@vercel/static" },
-    { "src": "api/**/*.js", "use": "@vercel/node" }
-  ],
-  "routes": [
-    { "src": "/pay/(.*)", "dest": "/customer/$1" },
-    { "src": "/pay", "dest": "/customer/index.html" },
-    { "src": "/receive/(.*)", "dest": "/merchant/$1" },
-    { "src": "/receive", "dest": "/merchant/index.html" },
-    { "src": "/shared/(.*)", "dest": "/shared/$1" },
-    { "src": "/api/(.*)", "dest": "/api/$1" },
-    { "src": "/", "dest": "/customer/index.html" }
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api/$1" },
+    { "source": "/pay/:path*", "destination": "/customer/:path*" },
+    { "source": "/pay", "destination": "/customer/index.html" },
+    { "source": "/receive/:path*", "destination": "/merchant/:path*" },
+    { "source": "/receive", "destination": "/merchant/index.html" },
+    { "source": "/shared/:path*", "destination": "/shared/:path*" },
+    { "source": "/", "destination": "/customer/index.html" }
   ],
   "headers": [
     {
@@ -25,3 +19,4 @@
     }
   ]
 }
+

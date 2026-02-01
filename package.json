@@ -1,0 +1,25 @@
+{
+  "name": "boonlink",
+  "version": "1.0.0",
+  "description": "BoonLink - Crypto to PromptPay instant payment system for Thai Baht",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "echo 'No build step required'",
+    "start": "vercel dev"
+  },
+  "keywords": [
+    "crypto",
+    "promptpay",
+    "thailand",
+    "payment",
+    "bsc",
+    "ethereum"
+  ],
+  "author": "BoonLink Team",
+  "license": "MIT"
+}

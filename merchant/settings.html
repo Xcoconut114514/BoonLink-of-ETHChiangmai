@@ -264,7 +264,11 @@
         function testVoice() {
             const activeBtn = document.querySelector('.voice-lang-btn.active');
             const lang = activeBtn ? activeBtn.dataset.voiceLang : 'zh';
-            playVoiceAnnouncement(100, '测试订单', lang);
+            console.log('🔊 Testing voice with language:', lang);
+            // Use appropriate test message for each language
+            const testNote = lang === 'th' ? 'ทดสอบ' : 
+                            lang === 'en' ? 'test order' : '测试订单';
+            playVoiceAnnouncement(100, testNote, lang);
         }
 
         // Save all

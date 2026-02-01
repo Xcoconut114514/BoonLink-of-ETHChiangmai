@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#191919">
+    <title>收款记录 - BoonLink 商家</title>
+    <link rel="stylesheet" href="/shared/css/wechat-dark.css">
+    <link rel="icon" href="/shared/assets/logo.png" type="image/png">
+    <style>
+        .history-container {
+            min-height: 100vh;
+            background: linear-gradient(180deg, #1a1a1a 0%, #0d0d0d 100%);
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+        
+        /* Summary Card */
+        .summary-card {
+            margin: 16px;
+            padding: 20px;
+            background: var(--bg-secondary);
+            border-radius: 16px;
+        }
+        .summary-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+        .summary-title {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+        .summary-filter {
+            display: flex;
+            gap: 8px;
+        }
+        .filter-btn {
+            padding: 6px 12px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            color: var(--text-secondary);
+            font-size: 12px;
+            cursor: pointer;
+        }
+        .filter-btn.active {
+            background: #FF9500;
+            border-color: #FF9500;
+            color: white;
+        }
+        .summary-row {
+            display: flex;
+            gap: 16px;
+        }
+        .summary-item {
+            flex: 1;
+            text-align: center;
+        }
+        .summary-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        .summary-value.green { color: var(--accent-green); }
+        .summary-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+        
+        /* Transaction List */
+        .tx-section {
+            margin: 16px;
+        }
+        .tx-date-header {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+            padding-left: 4px;
+        }
+        .tx-list {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .tx-item {
+            display: flex;
+            align-items: center;
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .tx-item:last-child {
+            border-bottom: none;
+        }
+        .tx-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(7, 193, 96, 0.15);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            margin-right: 12px;
+        }
+        .tx-info {
+            flex: 1;
+        }
+        .tx-title {
+            font-size: 15px;
+            color: var(--text-primary);
+            margin-bottom: 2px;
+        }
+        .tx-subtitle {
+            font-size: 12px;
+            color: var(--text-tertiary);
+        }
+        .tx-amount {
+            text-align: right;
+        }
+        .tx-amount-value {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--accent-green);
+        }
+        .tx-amount-time {
+            font-size: 11px;
+            color: var(--text-tertiary);
+            margin-top: 2px;
+        }
+        
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+        }
+        .empty-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+        .empty-text {
+            font-size: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="history-container">
+        <!-- Header -->
+        <div class="wc-header">
+            <button class="wc-header-btn" onclick="history.back()">←</button>
+            <div class="wc-header-title" id="pageTitle">收款记录</div>
+            <button class="wc-header-btn">⋯</button>
+        </div>
+        
+        <!-- Summary -->
+        <div class="summary-card">
+            <div class="summary-header">
+                <span class="summary-title" id="summaryTitle">收款统计</span>
+                <div class="summary-filter">
+                    <button class="filter-btn active" data-period="today" onclick="setPeriod('today')" id="btnToday">今日</button>
+                    <button class="filter-btn" data-period="week" onclick="setPeriod('week')" id="btnWeek">本周</button>
+                    <button class="filter-btn" data-period="month" onclick="setPeriod('month')" id="btnMonth">本月</button>
+                </div>
+            </div>
+            <div class="summary-row">
+                <div class="summary-item">
+                    <div class="summary-value green" id="totalAmount">฿0</div>
+                    <div class="summary-label" id="labelAmount">收款金额</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-value" id="totalCount">0</div>
+                    <div class="summary-label" id="labelCount">交易笔数</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Transaction List -->
+        <div class="tx-section" id="txSection">
+            <div class="tx-date-header" id="dateHeader">今日</div>
+            <div class="tx-list" id="txList">
+                <!-- Dynamic content -->
+            </div>
+        </div>
+        
+        <!-- Empty State -->
+        <div class="empty-state" id="emptyState" style="display: none;">
+            <div class="empty-icon">📋</div>
+            <div class="empty-text" id="emptyText">暂无收款记录</div>
+        </div>
+    </div>
+    
+    <script>
+        // i18n
+        const i18n = {
+            zh: {
+                pageTitle: '收款记录',
+                summaryTitle: '收款统计',
+                today: '今日',
+                week: '本周',
+                month: '本月',
+                labelAmount: '收款金额',
+                labelCount: '交易笔数',
+                emptyText: '暂无收款记录',
+                paymentReceived: '收款',
+                orderId: '订单号'
+            },
+            en: {
+                pageTitle: 'Transaction History',
+                summaryTitle: 'Payment Summary',
+                today: 'Today',
+                week: 'This Week',
+                month: 'This Month',
+                labelAmount: 'Total Received',
+                labelCount: 'Transactions',
+                emptyText: 'No transactions yet',
+                paymentReceived: 'Payment',
+                orderId: 'Order'
+            },
+            th: {
+                pageTitle: 'ประวัติรับเงิน',
+                summaryTitle: 'สรุปการรับเงิน',
+                today: 'วันนี้',
+                week: 'สัปดาห์นี้',
+                month: 'เดือนนี้',
+                labelAmount: 'ยอดรับ',
+                labelCount: 'รายการ',
+                emptyText: 'ยังไม่มีรายการ',
+                paymentReceived: 'รับเงิน',
+                orderId: 'รหัส'
+            }
+        };
+        
+        let currentLang = localStorage.getItem('boonlink_lang') || 'zh';
+        let currentPeriod = 'today';
+        
+        function t(key) {
+            return i18n[currentLang]?.[key] || i18n.zh[key] || key;
+        }
+        
+        function applyTranslations() {
+            document.getElementById('pageTitle').textContent = t('pageTitle');
+            document.getElementById('summaryTitle').textContent = t('summaryTitle');
+            document.getElementById('btnToday').textContent = t('today');
+            document.getElementById('btnWeek').textContent = t('week');
+            document.getElementById('btnMonth').textContent = t('month');
+            document.getElementById('labelAmount').textContent = t('labelAmount');
+            document.getElementById('labelCount').textContent = t('labelCount');
+            document.getElementById('emptyText').textContent = t('emptyText');
+        }
+        
+        function setPeriod(period) {
+            currentPeriod = period;
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.period === period);
+            });
+            loadTransactions();
+        }
+        
+        async function loadTransactions() {
+            // Load from IndexedDB
+            const transactions = await getTransactionsFromCache();
+            
+            // Filter by period
+            const now = new Date();
+            const filtered = transactions.filter(tx => {
+                const txDate = new Date(tx.receivedAt);
+                if (currentPeriod === 'today') {
+                    return txDate.toDateString() === now.toDateString();
+                } else if (currentPeriod === 'week') {
+                    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                    return txDate >= weekAgo;
+                } else {
+                    const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+                    return txDate >= monthAgo;
+                }
+            });
+            
+            // Update summary
+            const totalAmount = filtered.reduce((sum, tx) => sum + (tx.amountTHB || 0), 0);
+            document.getElementById('totalAmount').textContent = '฿' + totalAmount.toLocaleString();
+            document.getElementById('totalCount').textContent = filtered.length;
+            
+            // Update date header
+            document.getElementById('dateHeader').textContent = t(currentPeriod);
+            
+            // Render list
+            const listEl = document.getElementById('txList');
+            const emptyEl = document.getElementById('emptyState');
+            const sectionEl = document.getElementById('txSection');
+            
+            if (filtered.length === 0) {
+                sectionEl.style.display = 'none';
+                emptyEl.style.display = 'block';
+            } else {
+                sectionEl.style.display = 'block';
+                emptyEl.style.display = 'none';
+                
+                listEl.innerHTML = filtered.map(tx => `
+                    <div class="tx-item">
+                        <div class="tx-icon">💰</div>
+                        <div class="tx-info">
+                            <div class="tx-title">${t('paymentReceived')}</div>
+                            <div class="tx-subtitle">${t('orderId')}: ${tx.orderId || '-'}</div>
+                        </div>
+                        <div class="tx-amount">
+                            <div class="tx-amount-value">+฿${(tx.amountTHB || 0).toLocaleString()}</div>
+                            <div class="tx-amount-time">${formatTime(tx.receivedAt)}</div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+        
+        function formatTime(timestamp) {
+            const date = new Date(timestamp);
+            return date.toLocaleTimeString(currentLang === 'zh' ? 'zh-CN' : currentLang === 'th' ? 'th-TH' : 'en-US', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+        
+        async function getTransactionsFromCache() {
+            return new Promise((resolve) => {
+                const request = indexedDB.open('BoonLinkMerchant', 1);
+                
+                request.onerror = () => resolve([]);
+                
+                request.onsuccess = () => {
+                    const db = request.result;
+                    if (!db.objectStoreNames.contains('receivedPayments')) {
+                        resolve([]);
+                        return;
+                    }
+                    
+                    const tx = db.transaction('receivedPayments', 'readonly');
+                    const store = tx.objectStore('receivedPayments');
+                    const getAll = store.getAll();
+                    
+                    getAll.onsuccess = () => {
+                        const results = getAll.result || [];
+                        results.sort((a, b) => (b.receivedAt || 0) - (a.receivedAt || 0));
+                        resolve(results);
+                    };
+                    
+                    getAll.onerror = () => resolve([]);
+                };
+                
+                request.onupgradeneeded = (event) => {
+                    const db = event.target.result;
+                    if (!db.objectStoreNames.contains('receivedPayments')) {
+                        db.createObjectStore('receivedPayments', { keyPath: 'orderId' });
+                    }
+                };
+            });
+        }
+        
+        // Init
+        applyTranslations();
+        loadTransactions();
+    </script>
+</body>
+</html>

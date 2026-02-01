@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#191919">
+    <title>收款码 - BoonLink 商家</title>
+    <link rel="stylesheet" href="/shared/css/wechat-dark.css">
+    <link rel="icon" href="/shared/assets/logo.png" type="image/png">
+    <style>
+        .qrcode-container {
+            min-height: 100vh;
+            background: linear-gradient(180deg, #1a1a1a 0%, #0d0d0d 100%);
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+        
+        /* Settings Card */
+        .settings-card {
+            margin: 16px;
+            padding: 20px;
+            background: var(--bg-secondary);
+            border-radius: 16px;
+        }
+        .settings-title {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+        }
+        .input-group {
+            margin-bottom: 16px;
+        }
+        .input-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+            display: block;
+        }
+        .input-field {
+            width: 100%;
+            padding: 12px 14px;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        .input-field:focus {
+            outline: none;
+            border-color: #FF9500;
+        }
+        .input-hint {
+            font-size: 12px;
+            color: var(--text-tertiary);
+            margin-top: 4px;
+        }
+        .generate-btn {
+            width: 100%;
+            padding: 14px;
+            background: #FF9500;
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .generate-btn:active {
+            opacity: 0.9;
+        }
+        
+        /* QR Display */
+        .qr-display {
+            display: none;
+            margin: 16px;
+            padding: 24px;
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            text-align: center;
+        }
+        .qr-display.show { display: block; }
+        .qr-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 6px;
+        }
+        .qr-subtitle {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+        }
+        .qr-box {
+            display: inline-block;
+            padding: 16px;
+            background: white;
+            border-radius: 12px;
+            margin-bottom: 16px;
+        }
+        .qr-amount {
+            font-size: 28px;
+            font-weight: 700;
+            color: #FF9500;
+            margin-bottom: 4px;
+        }
+        .qr-recipient {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+        .qr-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+        }
+        .qr-action-btn {
+            flex: 1;
+            padding: 12px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 14px;
+            cursor: pointer;
+        }
+        .qr-action-btn:active {
+            background: var(--bg-tertiary);
+        }
+        
+        /* PromptPay Logo */
+        .promptpay-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            background: rgba(0, 122, 255, 0.1);
+            border-radius: 20px;
+            margin-top: 12px;
+        }
+        .promptpay-badge span {
+            font-size: 13px;
+            color: #007AFF;
+        }
+    </style>
+</head>
+<body>
+    <div class="qrcode-container">
+        <!-- Header -->
+        <div class="wc-header">
+            <button class="wc-header-btn" onclick="history.back()">←</button>
+            <div class="wc-header-title" id="pageTitle">收款码</div>
+            <button class="wc-header-btn">⋯</button>
+        </div>
+        
+        <!-- Settings -->
+        <div class="settings-card" id="settingsCard">
+            <div class="settings-title" id="settingsTitle">PromptPay 收款码设置</div>
+            
+            <div class="input-group">
+                <label class="input-label" id="phoneLabel">PromptPay 手机号 / 身份证号</label>
+                <input type="text" class="input-field" id="promptpayId" placeholder="0812345678">
+                <div class="input-hint" id="phoneHint">输入你的 PromptPay 绑定号码</div>
+            </div>
+            
+            <div class="input-group">
+                <label class="input-label" id="amountLabel">金额 (可选)</label>
+                <input type="number" class="input-field" id="amount" placeholder="留空为任意金额">
+                <div class="input-hint" id="amountHint">设置固定收款金额，或留空让客户自行输入</div>
+            </div>
+            
+            <button class="generate-btn" onclick="generateQR()" id="generateBtn">生成收款码</button>
+        </div>
+        
+        <!-- QR Display -->
+        <div class="qr-display" id="qrDisplay">
+            <div class="qr-title" id="qrTitle">PromptPay 收款码</div>
+            <div class="qr-subtitle" id="qrSubtitle">请让客户使用银行App扫码付款</div>
+            
+            <div class="qr-box">
+                <canvas id="qrCanvas" width="200" height="200"></canvas>
+            </div>
+            
+            <div class="qr-amount" id="displayAmount"></div>
+            <div class="qr-recipient" id="displayRecipient"></div>
+            
+            <div class="promptpay-badge">
+                <span>🇹🇭 PromptPay</span>
+            </div>
+            
+            <div class="qr-actions">
+                <button class="qr-action-btn" onclick="editSettings()" id="editBtn">修改</button>
+                <button class="qr-action-btn" onclick="saveAsImage()" id="saveBtn">保存图片</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // PromptPay QR Generator (EMVCo standard)
+        // Based on Bank of Thailand PromptPay specification
+        
+        function generatePromptPayQR(mobileOrId, amount = null) {
+            // EMVCo TLV format
+            let payload = '';
+            
+            // Payload Format Indicator
+            payload += '000201';
+            
+            // Point of Initiation (12 = dynamic for amount, 11 = static)
+            payload += amount ? '010212' : '010211';
+            
+            // Merchant Account Information (PromptPay)
+            const aid = '0016A000000677010111'; // PromptPay AID
+            
+            // Format phone/ID
+            let formattedId = mobileOrId.replace(/[^0-9]/g, '');
+            let idType, idValue;
+            
+            if (formattedId.length === 10) {
+                // Mobile number - add 66 prefix
+                if (formattedId.startsWith('0')) {
+                    formattedId = '66' + formattedId.substring(1);
+                }
+                idType = '01'; // Mobile
+                idValue = '13' + formattedId;
+            } else if (formattedId.length === 13) {
+                // National ID
+                idType = '02'; // NID
+                idValue = '13' + formattedId;
+            } else {
+                throw new Error('Invalid PromptPay ID');
+            }
+            
+            const merchantInfo = aid + idType + idValue;
+            const merchantTag = '29' + merchantInfo.length.toString().padStart(2, '0') + merchantInfo;
+            payload += merchantTag;
+            
+            // Transaction Currency (THB = 764)
+            payload += '5303764';
+            
+            // Transaction Amount (if specified)
+            if (amount && amount > 0) {
+                const amountStr = amount.toFixed(2);
+                payload += '54' + amountStr.length.toString().padStart(2, '0') + amountStr;
+            }
+            
+            // Country Code (TH)
+            payload += '5802TH';
+            
+            // CRC placeholder
+            payload += '6304';
+            
+            // Calculate CRC16
+            const crc = calculateCRC16(payload);
+            payload += crc;
+            
+            return payload;
+        }
+        
+        function calculateCRC16(str) {
+            let crc = 0xFFFF;
+            for (let i = 0; i < str.length; i++) {
+                crc ^= str.charCodeAt(i) << 8;
+                for (let j = 0; j < 8; j++) {
+                    if (crc & 0x8000) {
+                        crc = (crc << 1) ^ 0x1021;
+                    } else {
+                        crc <<= 1;
+                    }
+                }
+                crc &= 0xFFFF;
+            }
+            return crc.toString(16).toUpperCase().padStart(4, '0');
+        }
+        
+        // Simple QR Code generator (no dependencies)
+        function drawQR(canvas, data) {
+            // Use a simple approach - encode as data URL for simplicity
+            // In production, use a proper QR library
+            const size = 200;
+            const ctx = canvas.getContext('2d');
+            
+            // Create QR code using canvas
+            const qr = generateQRMatrix(data);
+            const moduleSize = size / qr.length;
+            
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, size, size);
+            
+            ctx.fillStyle = '#000000';
+            for (let y = 0; y < qr.length; y++) {
+                for (let x = 0; x < qr[y].length; x++) {
+                    if (qr[y][x]) {
+                        ctx.fillRect(x * moduleSize, y * moduleSize, moduleSize, moduleSize);
+                    }
+                }
+            }
+        }
+        
+        // Minimal QR code generator (Version 4-L, alphanumeric mode)
+        function generateQRMatrix(data) {
+            // For PromptPay which uses alphanumeric data
+            // This is a simplified implementation
+            // In production, use qrcode-generator library
+            
+            const size = 33; // Version 4
+            const matrix = Array(size).fill(null).map(() => Array(size).fill(false));
+            
+            // Add finder patterns
+            addFinderPattern(matrix, 0, 0);
+            addFinderPattern(matrix, size - 7, 0);
+            addFinderPattern(matrix, 0, size - 7);
+            
+            // Add alignment pattern (Version 4)
+            addAlignmentPattern(matrix, size - 9, size - 9);
+            
+            // Add timing patterns
+            for (let i = 8; i < size - 8; i++) {
+                matrix[6][i] = i % 2 === 0;
+                matrix[i][6] = i % 2 === 0;
+            }
+            
+            // Encode data (simplified)
+            let bits = encodeAlphanumeric(data);
+            let bitIndex = 0;
+            
+            // Fill data modules (simplified zigzag)
+            for (let col = size - 1; col >= 0; col -= 2) {
+                if (col === 6) col--;
+                for (let row = 0; row < size; row++) {
+                    for (let c = 0; c < 2; c++) {
+                        const x = col - c;
+                        if (!isReserved(matrix, x, row, size)) {
+                            if (bitIndex < bits.length) {
+                                matrix[row][x] = bits[bitIndex] === '1';
+                                bitIndex++;
+                            }
+                        }
+                    }
+                }
+            }
+            
+            return matrix;
+        }
+        
+        function addFinderPattern(matrix, x, y) {
+            for (let dy = 0; dy < 7; dy++) {
+                for (let dx = 0; dx < 7; dx++) {
+                    const isOuter = dx === 0 || dx === 6 || dy === 0 || dy === 6;
+                    const isInner = dx >= 2 && dx <= 4 && dy >= 2 && dy <= 4;
+                    matrix[y + dy][x + dx] = isOuter || isInner;
+                }
+            }
+        }
+        
+        function addAlignmentPattern(matrix, x, y) {
+            for (let dy = -2; dy <= 2; dy++) {
+                for (let dx = -2; dx <= 2; dx++) {
+                    const dist = Math.max(Math.abs(dx), Math.abs(dy));
+                    matrix[y + dy][x + dx] = dist !== 1;
+                }
+            }
+        }
+        
+        function isReserved(matrix, x, y, size) {
+            // Finder patterns + separators
+            if (x < 9 && y < 9) return true;
+            if (x < 9 && y >= size - 8) return true;
+            if (x >= size - 8 && y < 9) return true;
+            // Timing patterns
+            if (x === 6 || y === 6) return true;
+            // Alignment pattern area
+            if (x >= size - 11 && x <= size - 7 && y >= size - 11 && y <= size - 7) return true;
+            return false;
+        }
+        
+        function encodeAlphanumeric(data) {
+            const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ $%*+-./:';
+            let bits = '0010'; // Mode indicator for alphanumeric
+            bits += data.length.toString(2).padStart(9, '0'); // Character count
+            
+            for (let i = 0; i < data.length; i += 2) {
+                const c1 = chars.indexOf(data[i].toUpperCase());
+                if (i + 1 < data.length) {
+                    const c2 = chars.indexOf(data[i + 1].toUpperCase());
+                    bits += (c1 * 45 + c2).toString(2).padStart(11, '0');
+                } else {
+                    bits += c1.toString(2).padStart(6, '0');
+                }
+            }
+            
+            // Pad to fill capacity
+            while (bits.length < 800) bits += '0';
+            
+            return bits;
+        }
+        
+        // Alternative: Use image-based QR generation via API
+        function generateQRImage(data, canvas) {
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            // Use a free QR API as fallback
+            img.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(data)}`;
+            img.onload = () => {
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, 200, 200);
+            };
+            img.onerror = () => {
+                // Fallback to simple pattern if API fails
+                drawQR(canvas, data);
+            };
+        }
+        
+        // Main functions
+        function generateQR() {
+            const promptpayId = document.getElementById('promptpayId').value.trim();
+            const amount = parseFloat(document.getElementById('amount').value) || null;
+            
+            if (!promptpayId) {
+                alert(t('enterPromptPayId'));
+                return;
+            }
+            
+            try {
+                const qrData = generatePromptPayQR(promptpayId, amount);
+                const canvas = document.getElementById('qrCanvas');
+                
+                // Use API-based QR generation for reliability
+                generateQRImage(qrData, canvas);
+                
+                // Update display
+                document.getElementById('displayAmount').textContent = 
+                    amount ? `฿${amount.toLocaleString()}` : t('anyAmount');
+                document.getElementById('displayRecipient').textContent = 
+                    t('recipient') + ': ' + promptpayId;
+                
+                // Show QR display
+                document.getElementById('settingsCard').style.display = 'none';
+                document.getElementById('qrDisplay').classList.add('show');
+                
+                // Save settings
+                localStorage.setItem('merchant_promptpay', promptpayId);
+                
+            } catch (e) {
+                alert(t('invalidId') + ': ' + e.message);
+            }
+        }
+        
+        function editSettings() {
+            document.getElementById('settingsCard').style.display = 'block';
+            document.getElementById('qrDisplay').classList.remove('show');
+        }
+        
+        function saveAsImage() {
+            const canvas = document.getElementById('qrCanvas');
+            const link = document.createElement('a');
+            link.download = 'promptpay-qr.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+        
+        // i18n
+        const i18n = {
+            zh: {
+                pageTitle: '收款码',
+                settingsTitle: 'PromptPay 收款码设置',
+                phoneLabel: 'PromptPay 手机号 / 身份证号',
+                phoneHint: '输入你的 PromptPay 绑定号码',
+                amountLabel: '金额 (可选)',
+                amountHint: '设置固定收款金额，或留空让客户自行输入',
+                generateBtn: '生成收款码',
+                qrTitle: 'PromptPay 收款码',
+                qrSubtitle: '请让客户使用银行App扫码付款',
+                editBtn: '修改',
+                saveBtn: '保存图片',
+                anyAmount: '任意金额',
+                recipient: '收款账户',
+                enterPromptPayId: '请输入 PromptPay 号码',
+                invalidId: '无效的 PromptPay 号码'
+            },
+            en: {
+                pageTitle: 'Payment QR',
+                settingsTitle: 'PromptPay QR Settings',
+                phoneLabel: 'PromptPay Phone / ID Number',
+                phoneHint: 'Enter your PromptPay registered number',
+                amountLabel: 'Amount (optional)',
+                amountHint: 'Set fixed amount or leave empty for any amount',
+                generateBtn: 'Generate QR Code',
+                qrTitle: 'PromptPay QR Code',
+                qrSubtitle: 'Ask customer to scan with their banking app',
+                editBtn: 'Edit',
+                saveBtn: 'Save Image',
+                anyAmount: 'Any Amount',
+                recipient: 'Recipient',
+                enterPromptPayId: 'Please enter PromptPay number',
+                invalidId: 'Invalid PromptPay number'
+            },
+            th: {
+                pageTitle: 'QR รับเงิน',
+                settingsTitle: 'ตั้งค่า QR พร้อมเพย์',
+                phoneLabel: 'เบอร์โทร / เลขบัตรประชาชน พร้อมเพย์',
+                phoneHint: 'ใส่เบอร์ที่ผูกกับพร้อมเพย์',
+                amountLabel: 'จำนวนเงิน (ไม่บังคับ)',
+                amountHint: 'กำหนดจำนวนเงินหรือปล่อยว่างให้ลูกค้าใส่เอง',
+                generateBtn: 'สร้าง QR Code',
+                qrTitle: 'QR พร้อมเพย์',
+                qrSubtitle: 'ให้ลูกค้าสแกนด้วยแอปธนาคาร',
+                editBtn: 'แก้ไข',
+                saveBtn: 'บันทึกรูป',
+                anyAmount: 'จำนวนใดก็ได้',
+                recipient: 'ผู้รับเงิน',
+                enterPromptPayId: 'กรุณาใส่เบอร์พร้อมเพย์',
+                invalidId: 'เบอร์พร้อมเพย์ไม่ถูกต้อง'
+            }
+        };
+        
+        let currentLang = localStorage.getItem('boonlink_lang') || 'zh';
+        
+        function t(key) {
+            return i18n[currentLang]?.[key] || i18n['zh'][key] || key;
+        }
+        
+        function applyTranslations() {
+            document.getElementById('pageTitle').textContent = t('pageTitle');
+            document.getElementById('settingsTitle').textContent = t('settingsTitle');
+            document.getElementById('phoneLabel').textContent = t('phoneLabel');
+            document.getElementById('phoneHint').textContent = t('phoneHint');
+            document.getElementById('amountLabel').textContent = t('amountLabel');
+            document.getElementById('amountHint').textContent = t('amountHint');
+            document.getElementById('generateBtn').textContent = t('generateBtn');
+            document.getElementById('qrTitle').textContent = t('qrTitle');
+            document.getElementById('qrSubtitle').textContent = t('qrSubtitle');
+            document.getElementById('editBtn').textContent = t('editBtn');
+            document.getElementById('saveBtn').textContent = t('saveBtn');
+        }
+        
+        // Init
+        const savedId = localStorage.getItem('merchant_promptpay');
+        if (savedId) {
+            document.getElementById('promptpayId').value = savedId;
+        }
+        applyTranslations();
+    </script>
+</body>
+</html>

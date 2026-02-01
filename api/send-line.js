@@ -58,10 +58,11 @@ export default async function handler(req, res) {
 BoonLink - Smart Payment Assistant`;
     } else {
         // Real payment notification - English
+        const noteText = note ? `📝 Note: ${note}\n` : '';
         message = `BoonLink Payment Received ✅
 
 💰 Amount: ฿${Number(amountTHB).toLocaleString()}
-${note ? `📝 Note: ${note}\n` : ''}⏰ Time: ${timestamp || new Date().toLocaleString('en-US')}
+${noteText}⏰ Time: ${timestamp || new Date().toLocaleString('en-US')}
 📋 Order: ${orderId || 'N/A'}
 
 ---

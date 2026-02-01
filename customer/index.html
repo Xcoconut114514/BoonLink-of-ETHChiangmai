@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#EDEDED">
     <title>BoonLink - 连接钱包</title>
-    <link rel="stylesheet" href="../shared/css/common.css">
-    <link rel="icon" href="../shared/assets/logo.png" type="image/png">
+    <link rel="stylesheet" href="/shared/css/common.css">
+    <link rel="icon" href="/shared/assets/logo.png" type="image/png">
 </head>
 <body>
     <div class="app-container">
@@ -19,7 +19,7 @@
 
         <!-- Logo Section -->
         <div class="logo-container">
-            <img src="../shared/assets/logo.png" alt="BoonLink" class="logo-image">
+            <img src="/shared/assets/logo.png" alt="BoonLink" class="logo-image">
             <div class="logo-text">BoonLink</div>
             <div class="logo-subtitle">Crypto → PromptPay</div>
         </div>
@@ -97,12 +97,17 @@
         </div>
     </div>
 
-    <script src="../shared/js/i18n.js"></script>
-    <script src="js/payment-limits.js"></script>
-    <script src="js/wallet.js"></script>
+    <script src="/customer/js/wallet.js"></script>
+    <script src="/customer/js/payment-limits.js"></script>
+    <script src="/shared/js/i18n.js"></script>
     <script>
-        // Check if already connected
+        // Wait for scripts to load
         async function init() {
+            // Ensure BoonLinkWallet is loaded
+            if (typeof BoonLinkWallet === 'undefined') {
+                console.error('BoonLinkWallet not loaded');
+                return;
+            }
             const state = await BoonLinkWallet.checkConnection();
             if (state && state.isConnected) {
                 await showConnectedState(state);

@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#EDEDED">
     <title>BoonLink 商家 - 收款</title>
-    <link rel="stylesheet" href="../shared/css/common.css">
-    <link rel="icon" href="../shared/assets/logo.png" type="image/png">
+    <link rel="stylesheet" href="/shared/css/common.css">
+    <link rel="icon" href="/shared/assets/logo.png" type="image/png">
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     <style>
         .scanner-container {
@@ -107,7 +107,7 @@
 
         <!-- Header -->
         <div class="logo-container" style="padding: 20px;">
-            <img src="../shared/assets/logo.png" alt="BoonLink" class="logo-image" style="width: 48px; height: 48px;">
+            <img src="/shared/assets/logo.png" alt="BoonLink" class="logo-image" style="width: 48px; height: 48px;">
             <div class="logo-text" style="font-size: 20px;" data-i18n="scanPaymentCode" data-i18n-section="merchant">扫码收款</div>
         </div>
 
@@ -175,10 +175,10 @@
         </div>
     </div>
 
-    <script src="../shared/js/i18n.js"></script>
-    <script src="js/offline-cache.js"></script>
-    <script src="js/voice.js"></script>
-    <script src="js/notify.js"></script>
+    <script src="/shared/js/i18n.js"></script>
+    <script src="/merchant/js/offline-cache.js"></script>
+    <script src="/merchant/js/voice.js"></script>
+    <script src="/merchant/js/notify.js"></script>
     <script>
         let html5QrcodeScanner;
         let cache;

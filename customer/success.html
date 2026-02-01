@@ -75,7 +75,7 @@
             localStorage.setItem('txHistory', JSON.stringify(history));
         }
         
-        // Notify merchant via API (so merchant can receive notification)
+        // Notify merchant via Server API (cross-device notification)
         async function notifyMerchant() {
             try {
                 const orderData = {
@@ -89,14 +89,21 @@
                     timestamp: Date.now()
                 };
                 
-                // Store in shared storage for merchant polling
+                // POST to server API for cross-device notification
+                const response = await fetch('/api/orders', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(orderData)
+                });
+                
+                const result = await response.json();
+                console.log('📤 Order sent to server:', result);
+            } catch (e) {
+                console.error('Notify merchant failed:', e);
+                // Fallback to localStorage for same-device testing
                 const pendingOrders = JSON.parse(localStorage.getItem('pendingMerchantOrders') || '[]');
                 pendingOrders.push(orderData);
                 localStorage.setItem('pendingMerchantOrders', JSON.stringify(pendingOrders));
-                
-                console.log('📤 Order saved for merchant:', orderData);
-            } catch (e) {
-                console.error('Notify merchant failed:', e);
             }
         }
         notifyMerchant();

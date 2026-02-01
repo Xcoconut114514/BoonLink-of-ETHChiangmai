@@ -467,52 +467,54 @@
         }
         
         // ============================================
-        // Order Polling - Check for new payments every 3 seconds
+        // Order Polling - Check Server API for new payments every 3 seconds
         // ============================================
-        let lastCheckedOrderCount = 0;
+        let lastPollTime = Date.now();
         let pollingInterval = null;
         
         function startOrderPolling() {
-            console.log('🔄 Starting order polling...');
-            lastCheckedOrderCount = getProcessedOrderCount();
+            console.log('🔄 Starting server order polling...');
+            lastPollTime = Date.now();
             
+            // Check immediately once
+            checkNewOrders();
+            
+            // Then poll every 3 seconds
             pollingInterval = setInterval(checkNewOrders, 3000);
         }
         
-        function getProcessedOrderCount() {
-            const orders = JSON.parse(localStorage.getItem('pendingMerchantOrders') || '[]');
-            return orders.filter(o => o.processed).length;
-        }
-        
         async function checkNewOrders() {
-            const orders = JSON.parse(localStorage.getItem('pendingMerchantOrders') || '[]');
-            const unprocessed = orders.filter(o => !o.processed);
-            
-            if (unprocessed.length > 0) {
-                console.log('📥 Found new orders:', unprocessed.length);
+            try {
+                // Poll server API for new orders
+                const response = await fetch(`/api/orders?since=${lastPollTime}&merchantId=`);
+                const data = await response.json();
                 
-                for (const order of unprocessed) {
-                    // Mark as processed
-                    order.processed = true;
+                if (data.orders && data.orders.length > 0) {
+                    console.log('📥 Found new orders from server:', data.orders.length);
                     
-                    // Update stats
-                    const stats = JSON.parse(localStorage.getItem('merchantStats') || '{"amount":0,"count":0}');
-                    stats.amount += order.amountTHB || 0;
-                    stats.count += 1;
-                    localStorage.setItem('merchantStats', JSON.stringify(stats));
-                    
-                    // Refresh display
-                    loadStats();
-                    
-                    // Play voice notification
-                    await playReceiveVoice(order.amountTHB);
-                    
-                    // Show notification
-                    showNewOrderNotification(order);
+                    for (const order of data.orders) {
+                        // Update stats
+                        const stats = JSON.parse(localStorage.getItem('merchantStats') || '{"amount":0,"count":0}');
+                        stats.amount += order.amountTHB || 0;
+                        stats.count += 1;
+                        localStorage.setItem('merchantStats', JSON.stringify(stats));
+                        
+                        // Refresh display
+                        loadStats();
+                        
+                        // Play voice notification
+                        await playReceiveVoice(order.amountTHB);
+                        
+                        // Show notification
+                        showNewOrderNotification(order);
+                    }
                 }
                 
-                // Save processed state
-                localStorage.setItem('pendingMerchantOrders', JSON.stringify(orders));
+                // Update poll time for next request
+                lastPollTime = data.timestamp || Date.now();
+                
+            } catch (error) {
+                console.error('❌ Order polling failed:', error);
             }
         }
         

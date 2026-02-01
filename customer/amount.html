@@ -319,6 +319,28 @@
 
     <script src="/customer/js/wallet.js"></script>
     <script>
+        // System limits (cannot be exceeded)
+        const SYSTEM_LIMITS = {
+            perTransaction: 5000,  // 单笔上限 ฿5,000
+            daily: 20000           // 每日上限 ฿20,000
+        };
+
+        // User limits
+        const userLimits = JSON.parse(localStorage.getItem('userLimits') || 'null') || {
+            perTransaction: SYSTEM_LIMITS.perTransaction,
+            daily: SYSTEM_LIMITS.daily
+        };
+
+        // Today's usage
+        let todayUsed = parseInt(localStorage.getItem('todayUsed') || '0');
+        const lastUsedDate = localStorage.getItem('lastUsedDate');
+        const today = new Date().toDateString();
+        if (lastUsedDate !== today) {
+            todayUsed = 0;
+            localStorage.setItem('todayUsed', '0');
+            localStorage.setItem('lastUsedDate', today);
+        }
+
         // State
         let currentAmount = '0';
         let paymentNote = localStorage.getItem('paymentNote') || '';
@@ -340,6 +362,22 @@
             updateDisplay();
         }
 
+        // Check if amount exceeds limits
+        function checkLimits(amount) {
+            const thbAmount = parseFloat(amount) || 0;
+            const effectivePerTx = Math.min(userLimits.perTransaction, SYSTEM_LIMITS.perTransaction);
+            const effectiveDaily = Math.min(userLimits.daily, SYSTEM_LIMITS.daily);
+            const remainingDaily = effectiveDaily - todayUsed;
+            
+            if (thbAmount > effectivePerTx) {
+                return { ok: false, error: `单笔限额 ฿${effectivePerTx.toLocaleString()}` };
+            }
+            if (thbAmount > remainingDaily) {
+                return { ok: false, error: `今日剩余限额 ฿${remainingDaily.toLocaleString()}` };
+            }
+            return { ok: true };
+        }
+
         // Numpad functions
         function showNumpad() {
             if (amountFromQR) return;
@@ -357,7 +395,17 @@
             const thbAmount = parseFloat(currentAmount) || 0;
             const cryptoAmount = (thbAmount / RATE).toFixed(2);
             document.getElementById('cryptoHint').textContent = `${cryptoAmount} USDT`;
-            document.getElementById('payButton').disabled = thbAmount <= 0;
+            
+            const limitCheck = checkLimits(currentAmount);
+            const payBtn = document.getElementById('payButton');
+            payBtn.disabled = thbAmount <= 0 || !limitCheck.ok;
+            
+            // Show limit warning if exceeded
+            if (!limitCheck.ok && thbAmount > 0) {
+                payBtn.textContent = limitCheck.error;
+            } else {
+                payBtn.textContent = '付款';
+            }
         }
 
         function formatAmount(amount) {
@@ -486,6 +534,11 @@
                     merchantName: merchantName,
                     thbAmount: thbAmount
                 });
+
+                // Update today's usage
+                todayUsed += thbAmount;
+                localStorage.setItem('todayUsed', todayUsed.toString());
+                localStorage.setItem('lastUsedDate', new Date().toDateString());
 
                 localStorage.setItem('txHash', txHash);
                 localStorage.setItem('cryptoAmount', cryptoAmount);

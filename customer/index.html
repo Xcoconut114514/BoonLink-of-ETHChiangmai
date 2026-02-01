@@ -292,42 +292,108 @@
         .limit-modal-body {
             padding: 20px;
         }
-        .limit-option {
-            display: flex;
-            align-items: center;
-            padding: 14px;
-            margin-bottom: 10px;
-            background: var(--bg-card);
-            border: 2px solid transparent;
+        .limit-system-info {
+            background: rgba(7, 193, 96, 0.1);
+            border: 1px solid rgba(7, 193, 96, 0.2);
             border-radius: 10px;
-            cursor: pointer;
+            padding: 14px;
+            margin-bottom: 20px;
         }
-        .limit-option.selected {
-            border-color: var(--accent-green);
+        .limit-system-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--accent-green);
+            margin-bottom: 10px;
         }
-        .limit-option-radio {
-            width: 20px;
-            height: 20px;
-            border: 2px solid var(--text-tertiary);
-            border-radius: 50%;
-            margin-right: 12px;
+        .limit-system-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            color: var(--text-secondary);
+            padding: 6px 0;
+        }
+        .limit-system-value {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+        .limit-personal-title {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 14px;
+        }
+        .limit-input-group {
+            margin-bottom: 16px;
+        }
+        .limit-input-label {
+            display: block;
+            font-size: 14px;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+        .limit-input-wrapper {
             display: flex;
             align-items: center;
-            justify-content: center;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
         }
-        .limit-option.selected .limit-option-radio {
-            border-color: var(--accent-green);
-            background: var(--accent-green);
-        }
-        .limit-option.selected .limit-option-radio::after {
-            content: '✓';
-            color: white;
-            font-size: 12px;
-        }
-        .limit-option-text {
-            flex: 1;
+        .limit-input-prefix {
+            padding: 12px;
             font-size: 15px;
+            color: var(--text-secondary);
+            background: var(--bg-input);
+        }
+        .limit-input {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            background: transparent;
             color: var(--text-primary);
+            font-size: 16px;
+            outline: none;
+        }
+        .limit-input::placeholder {
+            color: var(--text-tertiary);
+        }
+        .limit-input-suffix {
+            padding: 12px;
+            font-size: 13px;
+            color: var(--text-tertiary);
+        }
+        .limit-input-hint {
+            font-size: 12px;
+            color: var(--text-tertiary);
+            margin-top: 6px;
+        }
+        .limit-usage {
+            background: var(--bg-card);
+            border-radius: 10px;
+            padding: 14px;
+            margin-top: 20px;
+        }
+        .limit-usage-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+        }
+        .limit-usage-bar {
+            height: 8px;
+            background: var(--bg-input);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .limit-usage-fill {
+            height: 100%;
+            background: var(--accent-green);
+            border-radius: 4px;
+            transition: width 0.3s;
+        }
+        .limit-usage-text {
+            font-size: 13px;
+            color: var(--text-primary);
+            margin-top: 8px;
+            text-align: right;
         }
         .limit-modal-footer {
             display: flex;
@@ -469,33 +535,57 @@
     <div class="limit-modal-overlay" id="limitModal" onclick="closeLimitModal(event)">
         <div class="limit-modal" onclick="event.stopPropagation()">
             <div class="limit-modal-header">
-                <div class="limit-modal-title">设置支付限额</div>
+                <div class="limit-modal-title">支付限额设置</div>
             </div>
             <div class="limit-modal-body">
-                <div class="limit-option" data-limit="5000" onclick="selectLimit(this)">
-                    <div class="limit-option-radio"></div>
-                    <div class="limit-option-text">฿5,000 / 天</div>
+                <!-- System Limits Info -->
+                <div class="limit-system-info">
+                    <div class="limit-system-title">🔒 系统安全限制</div>
+                    <div class="limit-system-row">
+                        <span>单笔上限</span>
+                        <span class="limit-system-value">฿5,000</span>
+                    </div>
+                    <div class="limit-system-row">
+                        <span>每日上限</span>
+                        <span class="limit-system-value">฿20,000</span>
+                    </div>
                 </div>
-                <div class="limit-option selected" data-limit="10000" onclick="selectLimit(this)">
-                    <div class="limit-option-radio"></div>
-                    <div class="limit-option-text">฿10,000 / 天</div>
+                
+                <!-- Personal Limit Settings -->
+                <div class="limit-personal-title">个人限额（可选，不能超过系统上限）</div>
+                
+                <div class="limit-input-group">
+                    <label class="limit-input-label">单笔限额</label>
+                    <div class="limit-input-wrapper">
+                        <span class="limit-input-prefix">฿</span>
+                        <input type="number" id="perTxLimit" class="limit-input" placeholder="5000" min="100" max="5000" value="">
+                        <span class="limit-input-suffix">/ 笔</span>
+                    </div>
+                    <div class="limit-input-hint">最高 ฿5,000，留空使用系统上限</div>
                 </div>
-                <div class="limit-option" data-limit="20000" onclick="selectLimit(this)">
-                    <div class="limit-option-radio"></div>
-                    <div class="limit-option-text">฿20,000 / 天</div>
+                
+                <div class="limit-input-group">
+                    <label class="limit-input-label">每日限额</label>
+                    <div class="limit-input-wrapper">
+                        <span class="limit-input-prefix">฿</span>
+                        <input type="number" id="dailyLimit" class="limit-input" placeholder="20000" min="100" max="20000" value="">
+                        <span class="limit-input-suffix">/ 天</span>
+                    </div>
+                    <div class="limit-input-hint">最高 ฿20,000，留空使用系统上限</div>
                 </div>
-                <div class="limit-option" data-limit="50000" onclick="selectLimit(this)">
-                    <div class="limit-option-radio"></div>
-                    <div class="limit-option-text">฿50,000 / 天</div>
-                </div>
-                <div class="limit-option" data-limit="0" onclick="selectLimit(this)">
-                    <div class="limit-option-radio"></div>
-                    <div class="limit-option-text">无限额</div>
+                
+                <!-- Today's Usage -->
+                <div class="limit-usage">
+                    <div class="limit-usage-label">今日已用</div>
+                    <div class="limit-usage-bar">
+                        <div class="limit-usage-fill" id="usageFill" style="width: 0%"></div>
+                    </div>
+                    <div class="limit-usage-text"><span id="usedAmount">฿0</span> / <span id="totalLimit">฿20,000</span></div>
                 </div>
             </div>
             <div class="limit-modal-footer">
                 <button class="limit-btn limit-btn-cancel" onclick="closeLimitModal()">取消</button>
-                <button class="limit-btn limit-btn-confirm" onclick="saveLimit()">确定</button>
+                <button class="limit-btn limit-btn-confirm" onclick="saveLimit()">保存</button>
             </div>
         </div>
     </div>
@@ -511,7 +601,27 @@
             generic: '🔗'
         };
 
-        let currentLimit = parseInt(localStorage.getItem('dailyLimit') || '10000');
+        // System limits (cannot be exceeded)
+        const SYSTEM_LIMITS = {
+            perTransaction: 5000,  // 单笔上限 ฿5,000
+            daily: 20000           // 每日上限 ฿20,000
+        };
+
+        // User limits (loaded from localStorage, default to system limits)
+        let userLimits = JSON.parse(localStorage.getItem('userLimits') || 'null') || {
+            perTransaction: SYSTEM_LIMITS.perTransaction,
+            daily: SYSTEM_LIMITS.daily
+        };
+
+        // Today's usage
+        let todayUsed = parseInt(localStorage.getItem('todayUsed') || '0');
+        const lastUsedDate = localStorage.getItem('lastUsedDate');
+        const today = new Date().toDateString();
+        if (lastUsedDate !== today) {
+            todayUsed = 0;
+            localStorage.setItem('todayUsed', '0');
+            localStorage.setItem('lastUsedDate', today);
+        }
 
         // Init
         async function init() {
@@ -585,21 +695,27 @@
         }
 
         function updateLimitDisplay() {
-            const limit = currentLimit;
-            document.getElementById('remainingLimit').textContent = 
-                limit === 0 ? '无限' : '฿' + limit.toLocaleString();
+            const remaining = userLimits.daily - todayUsed;
+            document.getElementById('remainingLimit').textContent = '฿' + Math.max(0, remaining).toLocaleString();
         }
 
         // Limit Modal
         function openLimitModal() {
             document.getElementById('limitModal').classList.add('show');
-            // Set current selection
-            document.querySelectorAll('.limit-option').forEach(opt => {
-                opt.classList.remove('selected');
-                if (parseInt(opt.dataset.limit) === currentLimit) {
-                    opt.classList.add('selected');
-                }
-            });
+            // Load current values
+            const perTxInput = document.getElementById('perTxLimit');
+            const dailyInput = document.getElementById('dailyLimit');
+            perTxInput.value = userLimits.perTransaction < SYSTEM_LIMITS.perTransaction ? userLimits.perTransaction : '';
+            dailyInput.value = userLimits.daily < SYSTEM_LIMITS.daily ? userLimits.daily : '';
+            // Update usage bar
+            updateUsageDisplay();
+        }
+
+        function updateUsageDisplay() {
+            const percentage = Math.min(100, (todayUsed / userLimits.daily) * 100);
+            document.getElementById('usageFill').style.width = percentage + '%';
+            document.getElementById('usedAmount').textContent = '฿' + todayUsed.toLocaleString();
+            document.getElementById('totalLimit').textContent = '฿' + userLimits.daily.toLocaleString();
         }
 
         function closeLimitModal(event) {
@@ -607,18 +723,25 @@
             document.getElementById('limitModal').classList.remove('show');
         }
 
-        function selectLimit(el) {
-            document.querySelectorAll('.limit-option').forEach(opt => opt.classList.remove('selected'));
-            el.classList.add('selected');
-        }
-
         function saveLimit() {
-            const selected = document.querySelector('.limit-option.selected');
-            if (selected) {
-                currentLimit = parseInt(selected.dataset.limit);
-                localStorage.setItem('dailyLimit', currentLimit);
-                updateLimitDisplay();
-            }
+            const perTxInput = document.getElementById('perTxLimit');
+            const dailyInput = document.getElementById('dailyLimit');
+            
+            let perTx = parseInt(perTxInput.value) || SYSTEM_LIMITS.perTransaction;
+            let daily = parseInt(dailyInput.value) || SYSTEM_LIMITS.daily;
+            
+            // Enforce system limits
+            perTx = Math.min(perTx, SYSTEM_LIMITS.perTransaction);
+            daily = Math.min(daily, SYSTEM_LIMITS.daily);
+            
+            // Minimum 100
+            perTx = Math.max(100, perTx);
+            daily = Math.max(100, daily);
+            
+            userLimits = { perTransaction: perTx, daily: daily };
+            localStorage.setItem('userLimits', JSON.stringify(userLimits));
+            
+            updateLimitDisplay();
             document.getElementById('limitModal').classList.remove('show');
         }
 

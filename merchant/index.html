@@ -3,53 +3,338 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#EDEDED">
+    <meta name="theme-color" content="#191919">
     <title>BoonLink 商家端</title>
-    <link rel="stylesheet" href="/shared/css/common.css">
+    <link rel="stylesheet" href="/shared/css/wechat-dark.css">
     <link rel="icon" href="/shared/assets/logo.png" type="image/png">
+    <style>
+        .home-container {
+            min-height: 100vh;
+            background: linear-gradient(180deg, #1a1a1a 0%, #0d0d0d 100%);
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+        
+        /* Header */
+        .home-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            background: var(--bg-primary);
+        }
+        .home-header-title {
+            font-size: 17px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        .home-lang-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 14px;
+            cursor: pointer;
+        }
+        
+        /* Logo Section */
+        .home-logo {
+            text-align: center;
+            padding: 40px 20px 30px;
+        }
+        .home-logo-img {
+            width: 80px;
+            height: 80px;
+            border-radius: 20px;
+            margin-bottom: 16px;
+        }
+        .home-logo-text {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 6px;
+        }
+        .home-logo-sub {
+            font-size: 14px;
+            color: #FF9500;
+        }
+        .home-logo-badge {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 4px 12px;
+            background: rgba(255, 149, 0, 0.15);
+            border: 1px solid rgba(255, 149, 0, 0.3);
+            border-radius: 20px;
+            font-size: 12px;
+            color: #FF9500;
+        }
+        
+        /* Stats Card */
+        .stats-card {
+            margin: 0 16px 16px;
+            padding: 20px;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+        }
+        .stats-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+        .stats-title {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+        .stats-period {
+            font-size: 12px;
+            color: var(--text-tertiary);
+        }
+        .stats-row {
+            display: flex;
+            gap: 20px;
+        }
+        .stats-item {
+            flex: 1;
+            text-align: center;
+        }
+        .stats-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        .stats-value.green { color: var(--accent-green); }
+        .stats-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+        
+        /* Action Buttons */
+        .action-section {
+            padding: 0 16px;
+        }
+        .action-btn {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            padding: 16px;
+            margin-bottom: 12px;
+            background: var(--bg-secondary);
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .action-btn:active {
+            background: var(--bg-card);
+        }
+        .action-btn-icon {
+            width: 44px;
+            height: 44px;
+            background: var(--accent-green);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            margin-right: 14px;
+        }
+        .action-btn-icon.orange { background: #FF9500; }
+        .action-btn-icon.blue { background: #007AFF; }
+        .action-btn-icon.purple { background: #AF52DE; }
+        .action-btn-content {
+            flex: 1;
+            text-align: left;
+        }
+        .action-btn-title {
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+        .action-btn-desc {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+        .action-btn-arrow {
+            color: var(--text-tertiary);
+            font-size: 20px;
+        }
+        
+        /* Quick Actions */
+        .quick-section {
+            margin: 20px 16px 0;
+        }
+        .quick-title {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+            padding-left: 4px;
+        }
+        .quick-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+        }
+        .quick-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            padding: 16px 8px;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .quick-item:active {
+            background: var(--bg-card);
+        }
+        .quick-icon {
+            font-size: 26px;
+        }
+        .quick-label {
+            font-size: 12px;
+            color: var(--text-primary);
+        }
+        
+        /* Footer */
+        .home-footer {
+            text-align: center;
+            padding: 30px 16px;
+            color: var(--text-tertiary);
+            font-size: 12px;
+        }
+        .home-footer-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            background: rgba(7, 193, 96, 0.1);
+            border-radius: 20px;
+            margin-bottom: 10px;
+        }
+        .home-footer-badge svg {
+            width: 14px;
+            height: 14px;
+        }
+        .home-footer-badge span {
+            color: var(--accent-green);
+            font-size: 12px;
+        }
+    </style>
 </head>
 <body>
-    <div class="app-container">
-        <!-- Language Switcher -->
-        <div class="language-switcher">
-            <button class="lang-btn active" data-lang="zh" onclick="setLanguage('zh')">中文</button>
-            <button class="lang-btn" data-lang="en" onclick="setLanguage('en')">EN</button>
-            <button class="lang-btn" data-lang="th" onclick="setLanguage('th')">ไทย</button>
+    <div class="home-container">
+        <!-- Header -->
+        <div class="home-header">
+            <div></div>
+            <div class="home-header-title">商家端</div>
+            <button class="home-lang-btn" onclick="toggleLang()">中/TH</button>
         </div>
 
-        <!-- Logo Section -->
-        <div class="logo-container">
-            <img src="/shared/assets/logo.png" alt="BoonLink" class="logo-image">
-            <div class="logo-text">BoonLink</div>
-            <div class="logo-subtitle" data-i18n="merchantHome" data-i18n-section="merchant">商家收款</div>
+        <!-- Logo -->
+        <div class="home-logo">
+            <img src="/shared/assets/logo.png" alt="BoonLink" class="home-logo-img">
+            <div class="home-logo-text">BoonLink</div>
+            <div class="home-logo-sub">商家收款</div>
+            <div class="home-logo-badge">🏪 Merchant Portal</div>
         </div>
 
-        <!-- Main Content -->
-        <div class="app-content" style="padding-top: 0;">
-            <!-- Main Actions -->
-            <a href="/merchant/receive.html" class="btn btn-primary btn-large" style="margin-bottom: 12px;">
-                <span data-i18n="scanToReceive" data-i18n-section="merchant">扫码收款</span>
-            </a>
+        <!-- Stats Card -->
+        <div class="stats-card">
+            <div class="stats-header">
+                <span class="stats-title">收款统计</span>
+                <span class="stats-period">今日</span>
+            </div>
+            <div class="stats-row">
+                <div class="stats-item">
+                    <div class="stats-value green" id="todayAmount">฿0</div>
+                    <div class="stats-label">收款金额</div>
+                </div>
+                <div class="stats-item">
+                    <div class="stats-value" id="todayCount">0</div>
+                    <div class="stats-label">交易笔数</div>
+                </div>
+            </div>
+        </div>
 
-            <a href="/merchant/history.html" class="btn btn-secondary btn-large" style="margin-bottom: 12px;">
-                <span data-i18n="receiveHistory" data-i18n-section="merchant">收款记录</span>
+        <!-- Action Buttons -->
+        <div class="action-section">
+            <a href="/merchant/receive.html" class="action-btn">
+                <div class="action-btn-icon">📷</div>
+                <div class="action-btn-content">
+                    <div class="action-btn-title">扫码收款</div>
+                    <div class="action-btn-desc">扫描客户付款码收款</div>
+                </div>
+                <span class="action-btn-arrow">›</span>
             </a>
-
-            <a href="/merchant/settings.html" class="btn btn-secondary btn-large">
-                <span data-i18n="notificationSettings" data-i18n-section="merchant">通知设置</span>
+            <a href="/merchant/qrcode.html" class="action-btn">
+                <div class="action-btn-icon orange">🔳</div>
+                <div class="action-btn-content">
+                    <div class="action-btn-title">收款码</div>
+                    <div class="action-btn-desc">展示 PromptPay 收款码</div>
+                </div>
+                <span class="action-btn-arrow">›</span>
             </a>
+            <a href="/merchant/history.html" class="action-btn">
+                <div class="action-btn-icon blue">📋</div>
+                <div class="action-btn-content">
+                    <div class="action-btn-title">收款记录</div>
+                    <div class="action-btn-desc">查看历史收款明细</div>
+                </div>
+                <span class="action-btn-arrow">›</span>
+            </a>
+        </div>
 
-            <!-- Note: This page shows NO crypto information -->
-            <!-- Merchants only see THB amounts, order IDs, and notes -->
+        <!-- Quick Actions -->
+        <div class="quick-section">
+            <div class="quick-title">快捷功能</div>
+            <div class="quick-grid">
+                <a href="/merchant/settings.html" class="quick-item">
+                    <span class="quick-icon">⚙️</span>
+                    <span class="quick-label">设置</span>
+                </a>
+                <a href="/merchant/notify.html" class="quick-item">
+                    <span class="quick-icon">🔔</span>
+                    <span class="quick-label">通知</span>
+                </a>
+                <a href="/merchant/export.html" class="quick-item">
+                    <span class="quick-icon">📊</span>
+                    <span class="quick-label">导出</span>
+                </a>
+                <a href="/merchant/help.html" class="quick-item">
+                    <span class="quick-icon">❓</span>
+                    <span class="quick-label">帮助</span>
+                </a>
+            </div>
         </div>
 
         <!-- Footer -->
-        <div class="footer-info">
-            <p>💚 Fiat Settlement Gateway</p>
-            <p style="font-size: 11px; margin-top: 4px; color: var(--text-tertiary);">Zero-Touch Crypto™</p>
+        <div class="home-footer">
+            <div class="home-footer-badge">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#07C160" stroke-width="2">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                </svg>
+                <span>Zero-Touch Crypto™</span>
+            </div>
+            <div>商家只看泰铢金额 · 自动结算</div>
+            <div style="margin-top: 6px;">BoonLink © 2026</div>
         </div>
     </div>
 
-    <script src="/shared/js/i18n.js"></script>
+    <script>
+        // Load stats from localStorage (demo)
+        function loadStats() {
+            const stats = JSON.parse(localStorage.getItem('merchantStats') || '{"amount":0,"count":0}');
+            document.getElementById('todayAmount').textContent = '฿' + stats.amount.toLocaleString();
+            document.getElementById('todayCount').textContent = stats.count;
+        }
+
+        function toggleLang() {
+            alert('语言切换功能开发中');
+        }
+
+        loadStats();
+    </script>
 </body>
 </html>

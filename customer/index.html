@@ -3,170 +3,506 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#EDEDED">
-    <title>BoonLink - 连接钱包</title>
-    <link rel="stylesheet" href="/shared/css/common.css">
+    <meta name="theme-color" content="#191919">
+    <title>BoonLink - 加密支付</title>
+    <link rel="stylesheet" href="/shared/css/wechat-dark.css">
     <link rel="icon" href="/shared/assets/logo.png" type="image/png">
+    <style>
+        .home-container {
+            min-height: 100vh;
+            background: linear-gradient(180deg, #1a1a1a 0%, #0d0d0d 100%);
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+        
+        /* Header */
+        .home-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            background: var(--bg-primary);
+        }
+        .home-header-title {
+            font-size: 17px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        .home-lang-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 14px;
+            cursor: pointer;
+        }
+        
+        /* Logo Section */
+        .home-logo {
+            text-align: center;
+            padding: 40px 20px 30px;
+        }
+        .home-logo-img {
+            width: 80px;
+            height: 80px;
+            border-radius: 20px;
+            margin-bottom: 16px;
+        }
+        .home-logo-text {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 6px;
+        }
+        .home-logo-sub {
+            font-size: 14px;
+            color: var(--accent-green);
+        }
+        
+        /* Wallet Card */
+        .wallet-card {
+            margin: 0 16px 16px;
+            padding: 20px;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+        }
+        .wallet-card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .wallet-icon {
+            width: 44px;
+            height: 44px;
+            background: var(--bg-card);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+        .wallet-info {
+            flex: 1;
+        }
+        .wallet-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+        .wallet-address {
+            font-size: 15px;
+            color: var(--text-primary);
+            font-family: monospace;
+        }
+        .wallet-disconnect {
+            background: none;
+            border: none;
+            color: var(--text-tertiary);
+            font-size: 13px;
+            cursor: pointer;
+        }
+        .wallet-balance {
+            display: flex;
+            justify-content: space-between;
+            padding-top: 16px;
+            border-top: 1px solid var(--border-color);
+        }
+        .balance-item {
+            text-align: center;
+            flex: 1;
+        }
+        .balance-value {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        .balance-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+        
+        /* Connect Card */
+        .connect-card {
+            margin: 0 16px 16px;
+            padding: 24px 20px;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            text-align: center;
+        }
+        .connect-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+        .connect-desc {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+        }
+        .wallet-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .wallet-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            padding: 16px 8px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .wallet-btn:active {
+            background: var(--bg-input);
+            border-color: var(--accent-green);
+        }
+        .wallet-btn-icon {
+            font-size: 28px;
+        }
+        .wallet-btn-name {
+            font-size: 11px;
+            color: var(--text-primary);
+            white-space: nowrap;
+        }
+        .wallet-btn.unavailable {
+            opacity: 0.4;
+        }
+        .connect-features {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+        .connect-feature {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        /* Action Buttons */
+        .action-section {
+            padding: 0 16px;
+        }
+        .action-btn {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            padding: 16px;
+            margin-bottom: 12px;
+            background: var(--bg-secondary);
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .action-btn:active {
+            background: var(--bg-card);
+        }
+        .action-btn-icon {
+            width: 44px;
+            height: 44px;
+            background: var(--accent-green);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            margin-right: 14px;
+        }
+        .action-btn-icon.orange { background: #FF9500; }
+        .action-btn-icon.blue { background: #007AFF; }
+        .action-btn-content {
+            flex: 1;
+            text-align: left;
+        }
+        .action-btn-title {
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+        .action-btn-desc {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+        .action-btn-arrow {
+            color: var(--text-tertiary);
+            font-size: 20px;
+        }
+        
+        /* Footer */
+        .home-footer {
+            text-align: center;
+            padding: 30px 16px;
+            color: var(--text-tertiary);
+            font-size: 12px;
+        }
+        .home-footer-logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            margin-bottom: 8px;
+        }
+        .home-footer-logo svg {
+            width: 16px;
+            height: 16px;
+        }
+        
+        /* Limit Modal */
+        .limit-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.6);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .limit-modal-overlay.show {
+            display: flex;
+        }
+        .limit-modal {
+            width: 100%;
+            max-width: 340px;
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+        .limit-modal-header {
+            padding: 20px;
+            text-align: center;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .limit-modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        .limit-modal-body {
+            padding: 20px;
+        }
+        .limit-option {
+            display: flex;
+            align-items: center;
+            padding: 14px;
+            margin-bottom: 10px;
+            background: var(--bg-card);
+            border: 2px solid transparent;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+        .limit-option.selected {
+            border-color: var(--accent-green);
+        }
+        .limit-option-radio {
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--text-tertiary);
+            border-radius: 50%;
+            margin-right: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .limit-option.selected .limit-option-radio {
+            border-color: var(--accent-green);
+            background: var(--accent-green);
+        }
+        .limit-option.selected .limit-option-radio::after {
+            content: '✓';
+            color: white;
+            font-size: 12px;
+        }
+        .limit-option-text {
+            flex: 1;
+            font-size: 15px;
+            color: var(--text-primary);
+        }
+        .limit-modal-footer {
+            display: flex;
+            gap: 12px;
+            padding: 16px 20px;
+            border-top: 1px solid var(--border-color);
+        }
+        .limit-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .limit-btn-cancel {
+            background: var(--bg-card);
+            color: var(--text-primary);
+        }
+        .limit-btn-confirm {
+            background: var(--accent-green);
+            color: white;
+        }
+    </style>
 </head>
 <body>
-    <div class="app-container">
-        <!-- Language Switcher -->
-        <div class="language-switcher">
-            <button class="lang-btn active" data-lang="zh" onclick="setLanguage('zh')">中文</button>
-            <button class="lang-btn" data-lang="en" onclick="setLanguage('en')">EN</button>
-            <button class="lang-btn" data-lang="th" onclick="setLanguage('th')">ไทย</button>
+    <div class="home-container">
+        <!-- Header -->
+        <div class="home-header">
+            <div></div>
+            <div class="home-header-title">BoonLink</div>
+            <button class="home-lang-btn" onclick="toggleLang()">中/EN</button>
         </div>
 
-        <!-- Logo Section -->
-        <div class="logo-container">
-            <img src="/shared/assets/logo.png" alt="BoonLink" class="logo-image">
-            <div class="logo-text">BoonLink</div>
-            <div class="logo-subtitle">Crypto → PromptPay</div>
+        <!-- Logo -->
+        <div class="home-logo">
+            <img src="/shared/assets/logo.png" alt="BoonLink" class="home-logo-img">
+            <div class="home-logo-text">BoonLink</div>
+            <div class="home-logo-sub">Crypto → PromptPay</div>
         </div>
 
-        <!-- Not Connected Section -->
-        <div class="app-content" id="connectSection">
-            <div class="card">
-                <div class="card-header" style="text-align: center;">
-                    <span style="font-size: 32px;">🔗</span>
-                    <div style="margin-top: 8px;" data-i18n="connectWallet" data-i18n-section="customer">连接钱包</div>
-                </div>
-                <p style="text-align: center; color: var(--text-secondary); margin-bottom: 20px;" data-i18n="connectWalletDesc" data-i18n-section="customer">
-                    使用自托管钱包进行安全支付
-                </p>
-
-                <!-- Wallet Options -->
-                <div id="walletOptions" class="wallet-options">
-                    <button class="btn btn-wallet" onclick="handleConnect('metamask')" data-wallet="metamask">
-                        <span class="wallet-icon">🦊</span>
-                        <span class="wallet-name">MetaMask</span>
+        <!-- Connect Section (Not Connected) -->
+        <div id="connectSection">
+            <div class="connect-card">
+                <div class="connect-title">连接钱包</div>
+                <div class="connect-desc">使用自托管钱包进行安全加密支付</div>
+                <div class="wallet-grid">
+                    <button class="wallet-btn" onclick="handleConnect('metamask')" data-wallet="metamask">
+                        <span class="wallet-btn-icon">🦊</span>
+                        <span class="wallet-btn-name">MetaMask</span>
                     </button>
-                    <button class="btn btn-wallet" onclick="handleConnect('okx')" data-wallet="okx">
-                        <span class="wallet-icon">⚫</span>
-                        <span class="wallet-name">OKX Wallet</span>
+                    <button class="wallet-btn" onclick="handleConnect('okx')" data-wallet="okx">
+                        <span class="wallet-btn-icon">⚫</span>
+                        <span class="wallet-btn-name">OKX</span>
                     </button>
-                    <button class="btn btn-wallet" onclick="handleConnect('coinbase')" data-wallet="coinbase">
-                        <span class="wallet-icon">🔵</span>
-                        <span class="wallet-name">Coinbase</span>
+                    <button class="wallet-btn" onclick="handleConnect('coinbase')" data-wallet="coinbase">
+                        <span class="wallet-btn-icon">🔵</span>
+                        <span class="wallet-btn-name">Coinbase</span>
                     </button>
-                    <button class="btn btn-wallet" onclick="handleConnect('bitget')" data-wallet="bitget">
-                        <span class="wallet-icon">💎</span>
-                        <span class="wallet-name">Bitget</span>
+                    <button class="wallet-btn" onclick="handleConnect('bitget')" data-wallet="bitget">
+                        <span class="wallet-btn-icon">💎</span>
+                        <span class="wallet-btn-name">Bitget</span>
                     </button>
                 </div>
-
-                <div class="details-list" style="margin-top: 20px;">
-                    <div class="detail-item">
-                        <span class="detail-label">🔐 <span data-i18n="privateKeySafe" data-i18n-section="customer">私钥安全</span></span>
-                        <span class="detail-value" data-i18n="youControl" data-i18n-section="customer">您自己保管</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">📵 <span data-i18n="offlinePayment" data-i18n-section="customer">离线支付</span></span>
-                        <span class="detail-value" data-i18n="supported" data-i18n-section="customer">支持</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">⚡ <span data-i18n="network" data-i18n-section="customer">网络</span></span>
-                        <span class="detail-value">BSC (<span data-i18n="lowGas" data-i18n-section="customer">低 Gas</span>)</span>
-                    </div>
+                <div class="connect-features">
+                    <span class="connect-feature">🔐 私钥安全</span>
+                    <span class="connect-feature">⚡ BSC低Gas</span>
+                    <span class="connect-feature">📵 离线支付</span>
                 </div>
             </div>
         </div>
 
         <!-- Connected Section -->
-        <div class="app-content" id="connectedSection" style="display: none;">
-            <div class="card">
-                <div class="card-header">
-                    <span id="connectedWalletIcon">🦊</span> 
-                    <span id="connectedWalletName" data-i18n="walletConnected" data-i18n-section="customer">钱包已连接</span>
+        <div id="connectedSection" style="display: none;">
+            <!-- Wallet Card -->
+            <div class="wallet-card">
+                <div class="wallet-card-header">
+                    <div class="wallet-icon" id="walletIconDisplay">🦊</div>
+                    <div class="wallet-info">
+                        <div class="wallet-label">已连接</div>
+                        <div class="wallet-address" id="walletAddress">0x...1234</div>
+                    </div>
+                    <button class="wallet-disconnect" onclick="handleDisconnect()">断开</button>
                 </div>
-                <div class="details-list">
-                    <div class="detail-item">
-                        <span class="detail-label" data-i18n="address" data-i18n-section="customer">地址</span>
-                        <span class="detail-value" id="walletAddress">0x...1234</span>
+                <div class="wallet-balance">
+                    <div class="balance-item">
+                        <div class="balance-value" id="usdtBalance">--</div>
+                        <div class="balance-label">USDT 余额</div>
                     </div>
-                    <div class="detail-item">
-                        <span class="detail-label">USDT <span data-i18n="balance" data-i18n-section="customer">余额</span></span>
-                        <span class="detail-value" id="usdtBalance">--</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label" data-i18n="remainingLimit" data-i18n-section="customer">今日剩余限额</span>
-                        <span class="detail-value" id="remainingLimit">฿10,000</span>
+                    <div class="balance-item">
+                        <div class="balance-value" id="remainingLimit">฿10,000</div>
+                        <div class="balance-label">今日限额</div>
                     </div>
                 </div>
             </div>
 
-            <a href="/customer/scan.html" class="btn btn-primary btn-large" style="margin-bottom: 12px;">
-                <span data-i18n="scanPromptPay" data-i18n-section="customer">扫码支付 PromptPay</span>
-            </a>
-
-            <a href="/customer/amount.html" class="btn btn-secondary btn-large">
-                <span data-i18n="paymentLimits" data-i18n-section="customer">设置支付限额</span>
-            </a>
-
-            <div style="text-align: center; margin-top: 20px;">
-                <a href="#" onclick="handleDisconnect()" class="back-link" style="color: var(--text-tertiary);">
-                    <span data-i18n="disconnectWallet" data-i18n-section="customer">断开钱包</span>
+            <!-- Action Buttons -->
+            <div class="action-section">
+                <a href="/customer/scan.html" class="action-btn">
+                    <div class="action-btn-icon">📷</div>
+                    <div class="action-btn-content">
+                        <div class="action-btn-title">扫码支付</div>
+                        <div class="action-btn-desc">扫描 PromptPay 二维码付款</div>
+                    </div>
+                    <span class="action-btn-arrow">›</span>
+                </a>
+                <div class="action-btn" onclick="openLimitModal()">
+                    <div class="action-btn-icon orange">⚙️</div>
+                    <div class="action-btn-content">
+                        <div class="action-btn-title">支付限额</div>
+                        <div class="action-btn-desc">设置每日支付上限保护资产</div>
+                    </div>
+                    <span class="action-btn-arrow">›</span>
+                </div>
+                <a href="/customer/history.html" class="action-btn">
+                    <div class="action-btn-icon blue">📋</div>
+                    <div class="action-btn-content">
+                        <div class="action-btn-title">交易记录</div>
+                        <div class="action-btn-desc">查看历史支付记录</div>
+                    </div>
+                    <span class="action-btn-arrow">›</span>
                 </a>
             </div>
         </div>
 
         <!-- Footer -->
-        <div class="footer-info">
-            <p>🔒 <span data-i18n="nonCustodial" data-i18n-section="customer">Non-custodial · 私钥不离手</span></p>
+        <div class="home-footer">
+            <div class="home-footer-logo">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#07C160" stroke-width="2">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                </svg>
+                <span>Non-custodial · 私钥不离手</span>
+            </div>
+            <div>BoonLink © 2026</div>
+        </div>
+    </div>
+
+    <!-- Limit Modal -->
+    <div class="limit-modal-overlay" id="limitModal" onclick="closeLimitModal(event)">
+        <div class="limit-modal" onclick="event.stopPropagation()">
+            <div class="limit-modal-header">
+                <div class="limit-modal-title">设置支付限额</div>
+            </div>
+            <div class="limit-modal-body">
+                <div class="limit-option" data-limit="5000" onclick="selectLimit(this)">
+                    <div class="limit-option-radio"></div>
+                    <div class="limit-option-text">฿5,000 / 天</div>
+                </div>
+                <div class="limit-option selected" data-limit="10000" onclick="selectLimit(this)">
+                    <div class="limit-option-radio"></div>
+                    <div class="limit-option-text">฿10,000 / 天</div>
+                </div>
+                <div class="limit-option" data-limit="20000" onclick="selectLimit(this)">
+                    <div class="limit-option-radio"></div>
+                    <div class="limit-option-text">฿20,000 / 天</div>
+                </div>
+                <div class="limit-option" data-limit="50000" onclick="selectLimit(this)">
+                    <div class="limit-option-radio"></div>
+                    <div class="limit-option-text">฿50,000 / 天</div>
+                </div>
+                <div class="limit-option" data-limit="0" onclick="selectLimit(this)">
+                    <div class="limit-option-radio"></div>
+                    <div class="limit-option-text">无限额</div>
+                </div>
+            </div>
+            <div class="limit-modal-footer">
+                <button class="limit-btn limit-btn-cancel" onclick="closeLimitModal()">取消</button>
+                <button class="limit-btn limit-btn-confirm" onclick="saveLimit()">确定</button>
+            </div>
         </div>
     </div>
 
     <script src="/customer/js/wallet.js"></script>
-    <script src="/customer/js/payment-limits.js"></script>
-    <script src="/shared/js/i18n.js"></script>
-    <style>
-        /* Multi-wallet styles */
-        .wallet-options {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            margin-bottom: 16px;
-        }
-        .btn-wallet {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 16px 12px;
-            border: 2px solid var(--border-color, #e0e0e0);
-            border-radius: 12px;
-            background: var(--card-bg, #fff);
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-        .btn-wallet:hover {
-            border-color: var(--primary-color, #3B82F6);
-            background: var(--hover-bg, #f8fafc);
-        }
-        .btn-wallet:active {
-            transform: scale(0.98);
-        }
-        .btn-wallet .wallet-icon {
-            font-size: 32px;
-            margin-bottom: 8px;
-        }
-        .btn-wallet .wallet-name {
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--text-primary, #1a1a1a);
-        }
-        .btn-wallet.unavailable {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-        .btn-wallet.unavailable .wallet-name::after {
-            content: ' (未安装)';
-            font-size: 11px;
-            color: var(--text-tertiary, #999);
-        }
-    </style>
     <script>
-        // Wallet icons mapping
+        // Wallet icons
         const WALLET_ICONS = {
             metamask: '🦊',
             okx: '⚫',
@@ -175,103 +511,121 @@
             generic: '🔗'
         };
 
-        // Wait for scripts to load
+        let currentLimit = parseInt(localStorage.getItem('dailyLimit') || '10000');
+
+        // Init
         async function init() {
-            // Ensure BoonLinkWallet is loaded
             if (typeof BoonLinkWallet === 'undefined') {
                 console.error('BoonLinkWallet not loaded');
                 return;
             }
-            
-            // Check available wallets and update UI
             updateWalletButtons();
-            
-            // Check previous connection
             const state = await BoonLinkWallet.checkConnection();
             if (state && state.isConnected) {
                 await showConnectedState(state);
             }
         }
 
-        // Update wallet button states based on availability
         function updateWalletButtons() {
             const availableWallets = BoonLinkWallet.detectWallets();
             const availableIds = availableWallets.map(w => w.id);
-            
-            document.querySelectorAll('.btn-wallet').forEach(btn => {
+            document.querySelectorAll('.wallet-btn').forEach(btn => {
                 const walletId = btn.getAttribute('data-wallet');
-                if (!availableIds.includes(walletId) && walletId !== 'generic') {
+                if (!availableIds.includes(walletId)) {
                     btn.classList.add('unavailable');
                 }
             });
         }
 
-        // Connect wallet
         async function handleConnect(walletId) {
             const btn = document.querySelector(`[data-wallet="${walletId}"]`);
             if (btn && btn.classList.contains('unavailable')) {
-                // Open wallet download page
                 const downloadUrls = {
                     metamask: 'https://metamask.io/download/',
                     okx: 'https://www.okx.com/web3',
                     coinbase: 'https://www.coinbase.com/wallet',
                     bitget: 'https://web3.bitget.com/'
                 };
-                if (downloadUrls[walletId]) {
-                    window.open(downloadUrls[walletId], '_blank');
-                }
+                if (downloadUrls[walletId]) window.open(downloadUrls[walletId], '_blank');
                 return;
             }
-            
             try {
                 const state = await BoonLinkWallet.connect(walletId);
                 await showConnectedState(state);
             } catch (error) {
-                const errorMsg = typeof BoonLinkI18n !== 'undefined' ? BoonLinkI18n.tc('error') : '错误';
-                alert(errorMsg + ': ' + error.message);
+                alert('连接失败: ' + error.message);
             }
         }
 
-        // Disconnect wallet
         function handleDisconnect() {
             BoonLinkWallet.disconnect();
             document.getElementById('connectSection').style.display = 'block';
             document.getElementById('connectedSection').style.display = 'none';
         }
 
-        // Show connected state
         async function showConnectedState(state) {
             document.getElementById('connectSection').style.display = 'none';
             document.getElementById('connectedSection').style.display = 'block';
-
-            // Display wallet icon and name
+            
             const walletIcon = WALLET_ICONS[state.walletType] || '🔗';
-            document.getElementById('connectedWalletIcon').textContent = walletIcon;
-            document.getElementById('connectedWalletName').textContent = 
-                state.walletName || '钱包已连接';
-
-            // Display address
+            document.getElementById('walletIconDisplay').textContent = walletIcon;
+            
             const addr = state.address;
-            document.getElementById('walletAddress').textContent =
+            document.getElementById('walletAddress').textContent = 
                 addr.substring(0, 6) + '...' + addr.substring(addr.length - 4);
-
-            // Get balance
+            
             try {
                 const balance = await BoonLinkWallet.getBalance('USDT');
                 document.getElementById('usdtBalance').textContent = balance + ' USDT';
             } catch (e) {
                 document.getElementById('usdtBalance').textContent = '--';
             }
-
-            // Get limit status
-            if (typeof BoonLinkLimits !== 'undefined') {
-                const limitStatus = BoonLinkLimits.getLimitStatus();
-                document.getElementById('remainingLimit').textContent =
-                    '฿' + limitStatus.remainingDaily.toLocaleString();
-            }
+            
+            updateLimitDisplay();
         }
 
-        // Initialize
+        function updateLimitDisplay() {
+            const limit = currentLimit;
+            document.getElementById('remainingLimit').textContent = 
+                limit === 0 ? '无限' : '฿' + limit.toLocaleString();
+        }
+
+        // Limit Modal
+        function openLimitModal() {
+            document.getElementById('limitModal').classList.add('show');
+            // Set current selection
+            document.querySelectorAll('.limit-option').forEach(opt => {
+                opt.classList.remove('selected');
+                if (parseInt(opt.dataset.limit) === currentLimit) {
+                    opt.classList.add('selected');
+                }
+            });
+        }
+
+        function closeLimitModal(event) {
+            if (event && event.target.id !== 'limitModal') return;
+            document.getElementById('limitModal').classList.remove('show');
+        }
+
+        function selectLimit(el) {
+            document.querySelectorAll('.limit-option').forEach(opt => opt.classList.remove('selected'));
+            el.classList.add('selected');
+        }
+
+        function saveLimit() {
+            const selected = document.querySelector('.limit-option.selected');
+            if (selected) {
+                currentLimit = parseInt(selected.dataset.limit);
+                localStorage.setItem('dailyLimit', currentLimit);
+                updateLimitDisplay();
+            }
+            document.getElementById('limitModal').classList.remove('show');
+        }
+
+        function toggleLang() {
+            alert('语言切换功能开发中');
+        }
+
         init();
     </script>
 </body>
